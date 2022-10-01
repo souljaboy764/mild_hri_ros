@@ -1,0 +1,11 @@
+<launch>
+
+	<node pkg="segmint" type="nuitrack_node.py" name="nuitrack_node" output="screen" required="true"/>
+	<node pkg="nodelet" type="nodelet" args="manager" name="standalone_nodelet" output="screen"/>
+	    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
+				<remap from="rgb/camera_info" to="camera_info"/>
+				<remap from="rgb/image_rect_color" to="image_color"/>
+				<remap from="depth_registered/image_rect" to="image_depth"/>
+				<remap from="depth_registered/points" to="pointcloud2/points"/>
+    </node>
+</launch>
