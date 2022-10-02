@@ -28,8 +28,8 @@ class NuitrackWrapper:
 		# self.base2cam[:3, 3] = np.array([-0.221, -0.651, 1.095])
 
 		#Left Realsense
-		self.base2cam = euler_matrix(-1.57072, -0.0628318, -2.13628)
-		self.base2cam[:3, 3] = np.array([-0.1, 0.41, 1.])
+		self.base2cam = euler_matrix(-1.57072, -0., -2.13628)
+		self.base2cam[:3, 3] = np.array([-0.13, 0.36, 1.15])
 
 		self.init_nuitrack()
 		print("Nuitrack Version:", self._nuitrack.get_version())
@@ -188,7 +188,7 @@ class NuitrackROS(NuitrackWrapper):
 	def update(self):
 		display_img, skeleton = super().update()
 		if display_img is None:
-			return None, []
+			return None, [], None
 		self._header.seq += 1
 		self._header.stamp = rospy.Time.now()
 
@@ -234,7 +234,7 @@ class NuitrackROS(NuitrackWrapper):
 				self._markerarray_msg.markers[i+14].header = self._header
 			self._viz_pub.publish(self._markerarray_msg)
 
-		return display_img, skeleton
+		return display_img, skeleton, self._header.stamp
 
 if __name__=="__main__":
 	# nuitrack = NuitrackWrapper(horizontal=False)
@@ -292,7 +292,7 @@ if __name__=="__main__":
 	t.transform.rotation.w = 1.
 
 	while not rospy.is_shutdown():
-		display_img, skeleton = nuitrack.update()
+		display_img, skeleton, stamp = nuitrack.update()
 		if len(skeleton)>0:
 			hand_pose = skeleton[-1,:]
 			hand_pose[1] *= -1
@@ -300,7 +300,7 @@ if __name__=="__main__":
 			t.transform.translation.x = hand_pose[0]
 			t.transform.translation.y = hand_pose[1]
 			t.transform.translation.z = hand_pose[2]
-			t.header.stamp = rospy.Time.now()
+			t.header.stamp = stamp
 			broadcaster.sendTransform(t)
 		rate.sleep()
 		

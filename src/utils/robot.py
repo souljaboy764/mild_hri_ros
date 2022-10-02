@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.optimize as opt
-
+from check_selfcollision.srv import *
+from moveit_msgs.msg import RobotState
 from utils import *
+import rospy
 
 # Pepper Joint limits
 lower_bounds = np.array([-2.0857, -1.5621, -2.0857, 0.009])
@@ -116,7 +118,10 @@ class PepperKinematics:
 	def __init__(self, lambda_x = 0.5, lambda_theta = 0.5):
 		self.lambda_x = lambda_x
 		self.lambda_theta = lambda_theta
-		pass
+		self._robot_state = RobotState()
+		self._robot_state.joint_state.name = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
+		rospy.wait_for_service('check_selfcollision_service')
+		self._check_selfcollision_service = rospy.ServiceProxy('check_selfcollision_service', SelfCollosion)
 
 	##
 	#	Function implementing the relative linkwise forward kinematics of the robot. This is the main function that needs to be implemented while extending this base class.
@@ -226,7 +231,7 @@ class PepperKinematics:
 		for i in range(len(q)):
 			zprev = As[i][0:3,2]
 			pprev = As[i][0:3,3]
-			jac[0:3,i] = np.cross(zprev, pe - pprev)
+			jac[0:3,i] = cross(zprev, pe - pprev)
 			jac[3:6,i] = zprev
 		return jac
 
@@ -294,7 +299,10 @@ class PepperKinematics:
 		tmp1 = np.dot(inv_sigma_theta, diff1)
 		diff2 = f_th - mu_x
 		tmp2 = np.dot(inv_sigma_x, diff2)
-		nll = 0.5*(np.dot(diff1,tmp1) + np.dot(diff2,tmp2))
+		
+		self._robot_state.joint_state.position = theta
+		
+		nll = 0.5*(np.dot(diff1,tmp1) + np.dot(diff2,tmp2)) + (not self._check_selfcollision_service(self._robot_state).is_colliding)*1000
 		grad_nll = tmp1 + np.dot(jac_th.T,tmp2)
 
 		return nll, grad_nll
@@ -320,10 +328,13 @@ class PepperKinematics:
 		kwargs.setdefault('method', 'BFGS')
 		kwargs.setdefault('jac', grad)
 		res = opt.minimize(cost, mu_theta, **kwargs)
+		kwargs.setdefault('print', False)
 		post_mean = res.x
 		if hasattr(res, 'hess_inv'):
 			post_cov = res.hess_inv
 		else:
 			post_cov = None
-		print(res)
+		if kwargs['options']['disp']:
+			print(res)
+			print(not self._check_selfcollision_service(self._robot_state).is_colliding)
 		return post_mean, post_cov

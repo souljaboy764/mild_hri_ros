@@ -49,9 +49,9 @@ fwd_kin = PepperKinematics(lambda_x = 0.5, lambda_theta=0.5)
 # target_pos, _ = fwd_kin.end_effector(np.deg2rad([38,-9,62,40]))
 # target_pos, _ = fwd_kin.end_effector(np.deg2rad([6,-38,26,40]))
 
-move_group = moveit_commander.MoveGroupCommander("right_arm")
-move_group.allow_replanning(True)
-move_group.go(tuple(default_arm_joints[:4] + [0]), wait=False)
+# move_group = moveit_commander.MoveGroupCommander("right_arm")
+# move_group.allow_replanning(True)
+# move_group.go(tuple(default_arm_joints[:4] + [0]), wait=False)
 
 rate = rospy.Rate(10)
 
@@ -134,7 +134,7 @@ while not rospy.is_shutdown():
 	rate.sleep()
 
 plt.close()
-move_group.go(tuple(default_arm_joints), wait=False)
+# move_group.go(tuple(default_arm_joints), wait=False)
 # motion_service.setAngles(joint_names, arm_joints, 0.1)
 # motion_service.setStiffnesses(joint_names, 0.0)
 # cv2.destroyAllWindows()

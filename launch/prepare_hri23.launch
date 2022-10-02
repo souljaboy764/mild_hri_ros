@@ -1,0 +1,25 @@
+<launch>
+
+	<arg name="robot_ip"          default="192.168.100.122"/>
+	<arg name="network_interface" default="enp5s0" />
+
+	<include file="$(find pepper_moveit_config)/launch/planning_context.launch">
+		<arg name="load_robot_description" value="true"/>
+	</include>
+
+	<include file="$(find pepper_dcm_bringup)/launch/pepper_bringup.launch">
+		<arg name="robot_ip" value="$(arg robot_ip)"/>
+		<arg name="network_interface" value="$(arg network_interface)"/>
+	</include>
+
+	<include file="$(find naoqi_driver)/launch/naoqi_driver.launch">
+		<arg name="nao_ip" value="$(arg robot_ip)"/>
+		<arg name="network_interface" value="$(arg network_interface)"/>
+	</include>
+
+	<node name="tf_dynreconf_node" type="node" pkg="tf_dynreconf" />
+	<node name="check_selfcollision" pkg="check_selfcollision" type="service_node" respawn="false" output="screen"/>
+
+	<node name="rviz" type="rviz" pkg="rviz" args="-d /home/elenoide/.rviz/hri23.rviz"/>
+
+</launch>

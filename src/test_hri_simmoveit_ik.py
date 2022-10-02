@@ -8,7 +8,7 @@ import tf2_ros
 import moveit_commander
 from tf.transformations import *
 from geometry_msgs.msg import Point, Quaternion, TransformStamped
-from moveit_msgs.msg import DisplayRobotState
+from moveit_msgs.msg import DisplayRobotState, OrientationConstraint
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionIKResponse
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
@@ -51,14 +51,15 @@ fwd_kin = PepperKinematics(lambda_x = 0.5, lambda_theta=0.5)
 # target_pos, _ = fwd_kin.end_effector(np.deg2rad([38,-9,62,40]))
 # target_pos, _ = fwd_kin.end_effector(np.deg2rad([6,-38,26,40]))
 
+move_group = moveit_commander.MoveGroupCommander("left_arm")
+move_group.go(tuple(default_arm_joints[4:] + [0]), wait=True)
 move_group = moveit_commander.MoveGroupCommander("right_arm")
-ik_service_client = rospy.ServiceProxy("compute_ik", GetPositionIK)
-move_group.allow_replanning(True)
 move_group.go(tuple(default_arm_joints[:4] + [0]), wait=False)
+ik_service_client = rospy.ServiceProxy("compute_ik", GetPositionIK)
 
 rospy.wait_for_service("compute_ik")
-ik_request = GetPositionIKRequest()
-ik_request.group_name = "right_arm"
+ik_service_request = GetPositionIKRequest()
+ik_service_request.ik_request.group_name = "right_arm"
 
 
 rate = rospy.Rate(10)
@@ -122,11 +123,12 @@ while not rospy.is_shutdown():
 		# mu_q, _ = fwd_kin.inv_kin(mu_theta=mu_est_hsmm[-1], sig_theta=np.eye(4),
 		# 								mu_x = hand_pose, sig_x = np.eye(3)*0.01, 
 		# 								method='L-BFGS-B', jac=None, bounds=bounds, options={'disp': False, 'iprint':-1})
-		ik_request.robot_state = msg.state
-		ik_request.pose_stamped.pose.position = Point(x=hand_pose[0], y=hand_pose[1], z=hand_pose[2])
-		ik_request.pose_stamped.header = 'base_footprint'
-		ik_request.pose_stamped.header.stamp = rospy.Time.now()
-		ik_response = ik_service_client(ik_request)
+		ik_service_request.ik_request.robot_state = msg.state
+		ik_service_request.ik_request.pose_stamped.pose.position = Point(x=hand_pose[0], y=hand_pose[1], z=hand_pose[2]+0.82)
+		ik_service_request.ik_request.constraints.orientation_constraints.append(OrientationConstraint(weight=0.))
+		ik_service_request.ik_request.pose_stamped.header.frame_id = 'base_footprint'
+		ik_service_request.ik_request.pose_stamped.header.stamp = rospy.Time.now()
+		ik_response = ik_service_client(ik_service_request)
 
 		rospy.loginfo("FK Result: " + str((ik_response.error_code.val == ik_response.error_code.SUCCESS)) +' '+ str(ik_response.error_code.val))
 		if ik_response.error_code.val == ik_response.error_code.SUCCESS:
@@ -152,7 +154,10 @@ while not rospy.is_shutdown():
 	rate.sleep()
 
 plt.close()
-move_group.go(tuple(default_arm_joints), wait=False)
+move_group = moveit_commander.MoveGroupCommander("left_arm")
+move_group.go(tuple(default_arm_joints[4:] + [0]), wait=True)
+move_group = moveit_commander.MoveGroupCommander("right_arm")
+move_group.go(tuple(default_arm_joints[:4] + [0]), wait=False)
 # motion_service.setAngles(joint_names, arm_joints, 0.1)
 # motion_service.setStiffnesses(joint_names, 0.0)
 # cv2.destroyAllWindows()

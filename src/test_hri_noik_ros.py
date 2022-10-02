@@ -35,6 +35,17 @@ hand_tf.header.frame_id = 'base_footprint'
 hand_tf.child_frame_id = 'hand'
 hand_tf.transform.rotation.w = 1
 
+handshake = False
+
+if handshake:
+	model = np.load('models/handshake_hri.npy', allow_pickle=True).item()
+	offset = np.array([0,-0.,0])
+	r_hand = 0.5
+else:
+	model = np.load('models/rocket_hri.npy', allow_pickle=True).item()
+	offset = np.array([0.05,0,0])
+	r_hand = 0.0
+
 robot_traj_publisher = rospy.Publisher("/pepper_dcm/RightArm_controller/command", JointTrajectory, queue_size=1)
 robot_hand_publisher = rospy.Publisher("/pepper_dcm/RightHand_controller/command", JointTrajectory, queue_size=1)
 pub = rospy.Publisher("display_robot_state", DisplayRobotState, queue_size=5)
@@ -56,6 +67,7 @@ for i in range(5):
 	joint_trajectory.points[-1].positions = default_arm_joints[:4]+ [0.0]
 joint_trajectory.header.stamp = rospy.Time.now()
 robot_traj_publisher.publish(joint_trajectory)
+
 rospy.Rate(1).sleep()
 
 hand_trajectory = JointTrajectory()
@@ -64,22 +76,12 @@ hand_trajectory.joint_names = ['RHand']
 for i in range(5):
 	hand_trajectory.points.append(JointTrajectoryPoint())
 	hand_trajectory.points[-1].time_from_start = rospy.Duration.from_sec(0.05*(i+1))
-	hand_trajectory.points[-1].positions = [0.5]
+	hand_trajectory.points[-1].positions = [r_hand]
 hand_trajectory.header.stamp = rospy.Time.now()
 robot_hand_publisher.publish(hand_trajectory)
 rospy.Rate(1).sleep()
 rate = rospy.Rate(100)
 
-handshake = False
-
-if handshake:
-	model = np.load('models/handshake_hri.npy', allow_pickle=True).item()
-	offset = np.array([0,-0.,0])
-	r_hand = 0.5
-else:
-	model = np.load('models/rocket_hri.npy', allow_pickle=True).item()
-	offset = np.array([0.05,0,0])
-	r_hand = 0.0
 
 
 nuitrack = NuitrackROS(horizontal=False)
@@ -163,17 +165,7 @@ while not rospy.is_shutdown():
 	if sum(last_segment[-6:])>=30 or (len(trajectory) > 50 and active_segment==alpha_hsmm.shape[0] - 1): # if it's the last segment, then that means you're going back to the final position
 		print(last_segment[-6:], sum(last_segment[-6:]))
 		break
-	if active_segment==0 or active_segment==alpha_hsmm.shape[0] - 1: # Handshake
-	# if active_segment==0 or active_segment==1 or active_segment==alpha_hsmm.shape[0] - 1:  # Rocket
-		mu_q = mu_est_hsmm[-1]
-		print('NO IK')
-	else:
-		print('IK')
-		mu_q, _ = fwd_kin.inv_kin(mu_theta=mu_est_hsmm[-1], sig_theta=np.eye(4),#sigma_est_hsmm[-1]*10,
-										mu_x = target_pose, sig_x = np.eye(3)*0.01, 
-										method='L-BFGS-B', jac=None, bounds=bounds,
-										options={'disp': False}
-								)
+	mu_q = mu_est_hsmm[-1]
 	
 	rarm_joints = rarm_joints*0.3 + 0.7*mu_q
 	msg.state.joint_state.position[:4] = rarm_joints
