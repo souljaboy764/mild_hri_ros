@@ -55,10 +55,10 @@ alpha_hsmm = model.forward_variable(len(train_trajs[idx]), train_trajs[idx][:,6:
 traj = np.array([mu_est_hsmm[:, 0]*2/5, mu_est_hsmm[:, 1]-0.1, (mu_est_hsmm[:, 2]+0.1)*4/5]).T
 print(traj.shape)
 
-pepper_left_arm_chain = Chain.from_json_file("resources/pepper/pepper_left_arm.json")
-pepper_right_arm_chain = Chain.from_json_file("resources/pepper/pepper_right_arm.json")
-pepper_legs_chain = Chain.from_json_file("resources/pepper/pepper_legs.json")
-pepper_head_chain = Chain.from_json_file("resources/pepper/pepper_head.json")
+pepper_left_arm_chain = Chain.from_json_file("/home/elenoide/ssd_data/playground/ikpy/resources/pepper/pepper_left_arm.json")
+pepper_right_arm_chain = Chain.from_json_file("/home/elenoide/ssd_data/playground/ikpy/resources/pepper/pepper_right_arm.json")
+pepper_legs_chain = Chain.from_json_file("/home/elenoide/ssd_data/playground/ikpy/resources/pepper/pepper_legs.json")
+pepper_head_chain = Chain.from_json_file("/home/elenoide/ssd_data/playground/ikpy/resources/pepper/pepper_head.json")
 
 pepper_head_chain.name = pepper_left_arm_chain.name = pepper_right_arm_chain.name = None
 
