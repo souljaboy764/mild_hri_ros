@@ -1,7 +1,7 @@
 import numpy as np
 import pbdlib as pbd
 
-from utils import *
+from utils.visualization import *
 
 data = np.load('data/labelled_sequences_prolonged.npz', allow_pickle=True)
 print([k for k in data.keys()])
@@ -28,19 +28,15 @@ for i in range(len(train_data)):
 for i in range(len(test_data)):
 	test_data[i][:,:,3] = -0.3 - test_data[i][:,:,3]
 	test_data[i][:,:,4] = 0.85 - test_data[i][:,:,4]
-visualize_skeleton(train_data[0])
-visualize_skeleton(train_data[15])
+# visualize_skeleton(train_data[0])
+# visualize_skeleton(train_data[15])
 shake_range = range(0,15)
 rocket_range = range(15,30)
 hand_trajs_train = [traj[:,-1,:] for traj in train_data]
 hand_trajs_test = [traj[:,-1,:] for traj in test_data]
 
-
 train_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:], np.diff(traj[:,3:], prepend=traj[0:1,3:], axis=0)], axis=-1) for traj in hand_trajs_train]
 test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:], np.diff(traj[:,3:], prepend=traj[0:1,3:], axis=0)], axis=-1) for traj in hand_trajs_test]
-# train_trajs = np.concatenate([train_trajs_p1, train_trajs_p2, train_vels_p1, train_vels_p2], axis=-1)
-# train_trajs = np.concatenate([train_trajs_p1, train_vels_p1], axis=-1)
-# train_trajs = np.concatenate([train_trajs_p2, train_vels_p2], axis=-1)
 
 for idx in [0,15]:
 	train_trajs_sample = train_trajs[idx:idx+15]
@@ -64,19 +60,6 @@ for idx in [0,15]:
 		# ax.text(model.mu[k,3], model.mu[k,4], model.mu[k,5],  '%s' % (str(k)), size=25, zorder=1, color='k')
 		ax.text(model.mu[k,6], model.mu[k,7], model.mu[k,8],  '%s' % (str(k)), size=25, zorder=1, color='k')
 
-		ax.arrow3D(model.mu[k,0], model.mu[k,1], model.mu[k,2],
-					# model.mu[k,6]*10, model.mu[k,7]*10, model.mu[k,8]*10,
-					model.mu[k,3], model.mu[k,4], model.mu[k,5],
-					mutation_scale=20,
-					ec ='green',
-					fc='green')
-		
-		ax.arrow3D(model.mu[k,6], model.mu[k,7], model.mu[k,8],
-		# ax.arrow3D(model.mu[k,3], model.mu[k,4], model.mu[k,5],
-					model.mu[k,9], model.mu[k,10], model.mu[k,11],
-					mutation_scale=20,
-					ec ='red',
-					fc='red')
 	ax.set_xlabel('X')
 	ax.set_ylabel('Y')
 	ax.set_zlabel('Z')
@@ -106,7 +89,7 @@ for idx in [0,15]:
 	# ax = fig.add_subplot(2, 2, 4)
 	# ax.plot(probs_hmm.T)
 	plt.show()
-	if idx == 0:
-		np.save('models/handshake_hands.npy',model)
-	elif idx == 15:
-		np.save('models/rocket_hands.npy',model)
+	# if idx == 0:
+	# 	np.save('models_test/handshake_hands.npy',model)
+	# elif idx == 15:
+	# 	np.save('models_test/rocket_hands.npy',model)

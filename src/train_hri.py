@@ -41,13 +41,15 @@ for traj in data['test_data']:
 	joint_traj = np.array([joint_angle_extraction(skeleton) for skeleton in traj[:, 30:].reshape((-1, 10, 3))])
 	test_data.append(np.concatenate([hand_traj, joint_traj], -1))
 
-# train_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:], np.diff(traj[:,3:], prepend=traj[0:1,3:], axis=0)], axis=-1) for traj in train_data]
-# test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:], np.diff(traj[:,3:], prepend=traj[0:1,3:], axis=0)], axis=-1) for traj in test_data]
+train_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:], np.diff(traj[:,3:], prepend=traj[0:1,3:], axis=0)], axis=-1) for traj in train_data]
+test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:], np.diff(traj[:,3:], prepend=traj[0:1,3:], axis=0)], axis=-1) for traj in test_data]
 
-train_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:]], axis=-1) for traj in train_data]
-test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:]], axis=-1) for traj in test_data]
+# train_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:]], axis=-1) for traj in train_data]
+# test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:]], axis=-1) for traj in test_data]
 
 for x in train_data[0]:
+	fig = plt.figure()
+	ax = fig.add_subplot(1, 2, 1, projection='3d')
 	joint_angles = x[3:].tolist()
 	pepper.setAngles(joint_names, joint_angles, 1.0)
 	simulation_manager.stepSimulation(client_id)
@@ -67,6 +69,8 @@ for idx in [0,15]:
 
 
 	if idx == 0:
-		np.save('models/handshake_hri_nojointvel.npy',model)
+		np.save('models_test/handshake_hri.npy',model)
 	elif idx == 15:
-		np.save('models/rocket_hri_nojointvel.npy',model)
+		np.save('models_test/rocket_hri.npy',model)
+
+simulation_manager.stopSimulation(client_id)
