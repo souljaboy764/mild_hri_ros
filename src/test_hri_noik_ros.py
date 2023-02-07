@@ -35,7 +35,7 @@ hand_tf.header.frame_id = 'base_footprint'
 hand_tf.child_frame_id = 'hand'
 hand_tf.transform.rotation.w = 1
 
-handshake = False
+handshake = True
 
 if handshake:
 	model = np.load('models/handshake_hri.npy', allow_pickle=True).item()

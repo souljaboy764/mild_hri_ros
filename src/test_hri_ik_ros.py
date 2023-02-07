@@ -52,7 +52,7 @@ joint_trajectory.header.frame_id = "odom"
 joint_trajectory.joint_names = joint_names
 for i in range(5):
 	joint_trajectory.points.append(JointTrajectoryPoint())
-	joint_trajectory.points[-1].time_from_start = rospy.Duration.from_sec(0.05*(i+1))
+	joint_trajectory.points[-1].time_from_start = rospy.Duration.from_sec(0.01*(i+1))
 	joint_trajectory.points[-1].positions = default_arm_joints[:4]+ [0.0]
 joint_trajectory.header.stamp = rospy.Time.now()
 robot_traj_publisher.publish(joint_trajectory)
@@ -70,12 +70,12 @@ robot_hand_publisher.publish(hand_trajectory)
 rospy.Rate(1).sleep()
 rate = rospy.Rate(100)
 
-handshake = False
+handshake = True
 
 if handshake:
 	model = np.load('models/handshake_hri.npy', allow_pickle=True).item()
-	offset = np.array([0,-0.,0])
-	r_hand = 0.5
+	offset = np.array([0,0.1,0])
+	r_hand = 0.8
 else:
 	model = np.load('models/rocket_hri.npy', allow_pickle=True).item()
 	offset = np.array([0.05,0,0])
