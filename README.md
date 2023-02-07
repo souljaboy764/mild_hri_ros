@@ -1,19 +1,28 @@
-run `preproc.py`
+# SegmInt
+
+# Dependencies:
+- torch (only for preprocessing)
+- matplotlib
+- numpy
+- ros
+- qi (libqi and libqi-python)
+- qibullet
+- nuitrack
+check_selfcollision package
+tf_dynreconf package
 
 
-roslaunch realsense2_camera rs_camera.launch enable_pointcloud:=true depth_width:=848 depth_height:=480 color_width:=848 color_height:=480
+# Data Preprocessing: 
+Run `preproc.py` to format the data in the directory "`data/`" in a suitable manner. This would generate the file `labelled_sequences_prolonged.npz` (which currently exisits in the `data/` directory)
+
+# Training
+(only qibullet, matplotlib and numpy needed)
+For training a basic HSMM on only human hand data and visualising example interactions, run `train_hands.py`
+For training the HSMMs for HRI and to see how the robot motions look like in simulation, run `train_hri.py`
+
+# Testing
+For the external calibration, after starting up the robot with [`pepper_moveit_config`](https://github.com/ros-naoqi/pepper_moveit_config), and `nuitrack_node.py` to start nuitrack, run `roslaunch tf_dynreconf node.launch reconfigure reconfigure:=true` and change the values of the transofrmation until the external calibration is satisfactory. Save these values and also change the values in the matrix `base2cam` in the file `nuitrack_node.py` accordingly.
 
 
-
-elenoide@elepc:~rosrun tf tf_echo base_footprint camera_depth_optical_frame
-At time 1664480625.072
-- Translation: [-0.220, -0.650, 1.080]
-- Rotation: in Quaternion [-0.191, 0.657, 0.203, 0.700]
-            in RPY (radian) [-0.002, 1.508, 0.564]
-            in RPY (degree) [-0.088, 86.400, 32.312]
-elenoide@elepc:~$ rosrun tf tf_echo base_footprint camera_color_optical_frame
-At time 1664480641.672
-- Translation: [-0.221, -0.651, 1.095]
-- Rotation: in Quaternion [-0.190, 0.654, 0.204, 0.703]
-            in RPY (radian) [-0.010, 1.498, 0.555]
-            in RPY (degree) [-0.550, 85.830, 31.782]
+Run `roslaunch segmint prepare_hri.launch` after setting the IP of the Pepper robot and the network interface accordingly. 
+For running the codes, there 
