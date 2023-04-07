@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_ip"          default="$(optenv NAO_IP 192.168.100.77)" /> <!-- 127.0.0.1 -->
+  <arg name="robot_port"        default="$(optenv NAO_PORT 9559)" />
+  <arg name="roscore_ip"        default="127.0.0.1" />
+  <arg name="network_interface" default="enxa0cec8c1a425" />
+
+ 	<!-- Call Robot publisher -->
+  <include file="$(find pepper_description)/launch/pepper_publisher.launch" />
+
+  <!-- Call Robot Trajectory Controller -->
+  <include file="$(find pepper_controller_server)/launch/pepper_controller_server.launch"/>
+
+  <!-- Call Robot Driver -->
+  <node pkg="naoqi_dcm_driver" type="naoqi_dcm_driver" name="naoqi_dcm_driver" respawn="false" output="screen" >
+    <!-- Load configurations from YAML file to parameter server -->
+    <rosparam file="$(find pepper_dcm_bringup)/config/pepper_dcm.yaml" command="load"/>
+    <rosparam file="$(find pepper_controller_server)/config/pepper_rhand_position_stiffness.yaml" command="load"/>
+    <param name="RobotIP"             value="$(arg robot_ip)" />
+    <param name="RobotPort"           value="$(arg robot_port)" />
+    <param name="DriverBrokerIP"      value="$(arg roscore_ip)" />
+    <param name="network_interface"   value="$(arg network_interface)" />
+    <param name="Prefix"              value="pepper_dcm" />
+    <param name="motor_groups"        value="RArm" /> <!-- either "Body" or separate groups in the order "Head LArm RArm" -->
+    <param name="use_dcm"             value="false" />
+    <param name="max_stiffness"       value="0.9" />
+  </node>
+	
+</launch>
