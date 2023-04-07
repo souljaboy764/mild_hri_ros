@@ -38,9 +38,9 @@ def rotation_normalization(skeleton):
 					 [yAxis[0], yAxis[1], yAxis[2]],
 					 [zAxis[0], zAxis[1], zAxis[2]]])
 
+# Assumes that the skeletons are already rotated such that the front 
 def joint_angle_extraction(skeleton): # Based on the Pepper Robot Kinematics
 	
-
 	# T = np.eye(4)
 	# T[:3,3] = skeleton[0]
 	# T[:3,:3] = rotation_normalization(skeleton)

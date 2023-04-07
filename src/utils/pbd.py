@@ -1,6 +1,8 @@
 import numpy as np
 import pbdlib as pbd
 
+# Some of these functions in pbdlib were causing numerical instabilities, so modified them here with some checks to be more stable
+
 def fwd_init(model, nbD, priors):
 	"""
 

@@ -18,8 +18,6 @@ print([k for k in data.keys()])
 train_data = [np.concatenate([traj[:, :30].reshape((-1,10,3)),traj[:, 30:].reshape((-1,10,3))], -1) for traj in data['train_data']]
 test_data = [np.concatenate([traj[:, :30].reshape((-1,10,3)),traj[:, 30:].reshape((-1,10,3))], -1) for traj in data['test_data']]
 
-train_labels = data['train_labels']
-test_labels = data['test_labels']
 print(len(train_data), train_data[0].shape)
 for i in range(len(train_data)):
 	train_data[i][:,:,3] = -0.3 - train_data[i][:,:,3]
@@ -63,9 +61,6 @@ for idx in [0,15]:
 	ax.set_xlabel('X')
 	ax.set_ylabel('Y')
 	ax.set_zlabel('Z')
-	# plt.show()
-	# pbd.plot_gmm(model.mu, model.sigma)
-	# plt.show()
 	ax = fig.add_subplot(1, 2, 2)
 	ax.imshow(np.log(model.Trans+1e-10), interpolation='nearest', vmin=-5, cmap='viridis')
 	plt.show()
@@ -73,21 +68,16 @@ for idx in [0,15]:
 
 	fig = plt.figure()
 	ax = fig.add_subplot(1, 2, 1, projection='3d')
-	mu_est_hsmm, sigma_est_hsmm = model.condition(train_trajs[idx][:,:6], dim_in=slice(0, 6), dim_out=slice(6, 12))
-	ax.plot(train_trajs[idx][:, 0], train_trajs[idx][:, 1], train_trajs[idx][:, 2], color='b', marker='o', alpha=0.2)
-	ax.plot(train_trajs[idx][:, 6], train_trajs[idx][:, 7], train_trajs[idx][:, 8], color='r', marker='o', alpha=0.2)
+	mu_est_hsmm, sigma_est_hsmm = model.condition(test_trajs[0][:,:6], dim_in=slice(0, 6), dim_out=slice(6, 12))
+	ax.plot(test_trajs[0][:, 0], test_trajs[0][:, 1], test_trajs[0][:, 2], color='b', marker='o', alpha=0.2)
+	ax.plot(test_trajs[0][:, 6], test_trajs[0][:, 7], test_trajs[0][:, 8], color='r', marker='o', alpha=0.2)
 	ax.plot(mu_est_hsmm[:, 0], mu_est_hsmm[:, 1], mu_est_hsmm[:, 2], color='y', marker='o', alpha=0.2)
 	pbd.plot_gmm3d(ax, model.mu[:,6:9], model.sigma[:,6:9,6:9], color='green', alpha=0.2)
 	
 	ax = fig.add_subplot(1, 2, 2)
 	
-	alpha_hsmm = model.forward_variable(len(train_trajs[idx][:,:6]), train_trajs[idx][:,:6], slice(0, 6))
+	alpha_hsmm = model.forward_variable(len(test_trajs[0][:,:6]), test_trajs[0][:,:6], slice(0, 6))
 	ax.plot(alpha_hsmm.T)
-	# ax = fig.add_subplot(2, 2, 2)
-	# probs_hmm, log_probs_hmm = model.obs_likelihood(train_trajs[idx][:,:6], marginal=slice(0, 6), sample_size=len(train_trajs[idx][:,:6]))
-	# ax.plot(log_probs_hmm.T)
-	# ax = fig.add_subplot(2, 2, 4)
-	# ax.plot(probs_hmm.T)
 	plt.show()
 	# if idx == 0:
 	# 	np.save('models_test/handshake_hands.npy',model)
