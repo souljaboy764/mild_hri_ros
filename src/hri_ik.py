@@ -11,14 +11,14 @@ from tf.transformations import *
 from moveit_msgs.msg import DisplayRobotState
 from geometry_msgs.msg import TransformStamped
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from custom_controllers.srv import JointTarget
+from pepper_controller_server.srv import JointTarget
 import rospkg
 rospack = rospkg.RosPack()
 
 rospy.init_node("ik_hri_node")
 
-rospy.wait_for_service('/joint_targets')
-send_target = rospy.ServiceProxy('/joint_targets', JointTarget)
+rospy.wait_for_service('/pepper_dcm/RightArm_controller/goal')
+send_target = rospy.ServiceProxy('/pepper_dcm/RightArm_controller/goal', JointTarget)
 state_pub = rospy.Publisher("display_robot_state", DisplayRobotState, queue_size=5)
 broadcaster = tf2_ros.StaticTransformBroadcaster()
 tfBuffer = tf2_ros.Buffer()
@@ -49,7 +49,7 @@ joint_trajectory.points.append(JointTrajectoryPoint())
 joint_trajectory.points[0].effort = np.ones(num_joints).tolist()
 joint_trajectory.points[0].positions = default_arm_joints[:5]
 
-pepper_right_arm_chain = Chain.from_json_file(os.paht.join(rospack.get_path('segmint-ik'), "resources", "pepper", "pepper_right_arm.json"))
+pepper_right_arm_chain = Chain.from_json_file(os.path.join(rospack.get_path('segmint-ik'), "resources", "pepper", "pepper_right_arm.json"))
 
 rate = rospy.Rate(100)
 count = 0.
@@ -90,7 +90,7 @@ while not rospy.is_shutdown():
 		state_pub.publish(msg)
 		rate.sleep()
 		continue
-	elif count > 40:
+	elif count >60:
 		joint_trajectory.points[0].effort[0] = 0.2
 
 	frame_target[:3, 3] = target_pose

@@ -36,5 +36,12 @@ For training the HSMMs for HRI and to see how the robot motions look like in sim
 
 For the external calibration, after starting up the robot with [`naoqi_dcm_driver`](https://github.com/souljaboy764/naoqi_dcm_driver), and `nuitrack_node.py` to start nuitrack, run `roslaunch tf_dynreconf node.launch reconfigure reconfigure:=true` and change the values of the transofrmation until the external calibration is satisfactory. Save these values from the dynamic reconfigrue GUI in [`config/nuitrack_pepper_tf.yaml`](config/nuitrack_pepper_tf.yaml).
 
-Run `roslaunch segmint-ik prepare_hri.launch` after setting the IP of the Pepper robot and the network interface accordingly.
-For running the codes, there
+Run `roslaunch segmint-ik prepare_hri.launch` after setting the IP of the Pepper robot and the network interface accordingly to get the setup ready.
+For running the IK baseline:
+
+```bash
+export LD_LIBRARY_PATH=/usr/local/lib/nuitrack
+sudo ldconfig
+source /path/to/catkin_ws/devel/setup.bash
+rosrun segmint-ik hri_ik.py
+```

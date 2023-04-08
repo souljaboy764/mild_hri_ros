@@ -3,7 +3,7 @@
 	<arg name="robot_ip"          default="192.168.100.77"/>
 	<arg name="network_interface" default="enxa0cec8c1a425" />
 
-	<include file="$(find pepper_dcm_bringup)/launch/pepper_bringup.launch">
+	<include file="$(find segmint-ik)/launch/pepper_bringup.launch">
 		<arg name="robot_ip" value="$(arg robot_ip)"/>
 		<arg name="network_interface" value="$(arg network_interface)"/>
 	</include>
@@ -17,7 +17,7 @@
     </node>
 
 	<node name="tf_dynreconf_node" type="node" pkg="tf_dynreconf" />
-	<node name="dynparam_load" type="dynparam" pkg="dynamic_reconfigure" args="load /tf_dynreconf_node $(find segmint-ik)/launch/nuitrack_pepper_tf.yaml"/>
+	<node name="dynparam_load" type="dynparam" pkg="dynamic_reconfigure" args="load /tf_dynreconf_node $(find segmint-ik)/config/nuitrack_pepper_tf.yaml"/>
 	<node name="check_selfcollision" pkg="check_selfcollision" type="service_node" respawn="true" output="screen"/>
 
 	<node name="rviz" type="rviz" pkg="rviz" args="-d $(env HOME)/.rviz/hri23.rviz"/>
