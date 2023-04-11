@@ -1,9 +1,11 @@
 import numpy as np
 import pbdlib as pbd
 import time
-from utils import *
+import matplotlib.pyplot as plt
 
 from qibullet import SimulationManager
+
+from utils import *
 
 simulation_manager = SimulationManager()
 client_id = simulation_manager.launchSimulation(gui=True)
@@ -47,30 +49,30 @@ test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:
 # train_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:]], axis=-1) for traj in train_data]
 # test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3], axis=0), traj[:,3:]], axis=-1) for traj in test_data]
 
-for x in train_data[0]:
-	fig = plt.figure()
-	ax = fig.add_subplot(1, 2, 1, projection='3d')
-	joint_angles = x[3:].tolist()
-	pepper.setAngles(joint_names, joint_angles, 1.0)
-	simulation_manager.stepSimulation(client_id)
-	time.sleep(0.1)
+# for x in train_data[0]:
+# 	fig = plt.figure()
+# 	ax = fig.add_subplot(1, 2, 1, projection='3d')
+# 	joint_angles = x[3:].tolist()
+# 	pepper.setAngles(joint_names, joint_angles, 1.0)
+# 	simulation_manager.stepSimulation(client_id)
+# 	time.sleep(0.1)
 
-for x in train_data[15]:
-	joint_angles = x[3:].tolist()
-	pepper.setAngles(joint_names, joint_angles, 1.0)
-	simulation_manager.stepSimulation(client_id)
-	time.sleep(0.1)
+for i in [0,5,10,15,20,28]:
+	for x in train_data[i]:
+		joint_angles = x[3:].tolist()
+		pepper.setAngles(joint_names, joint_angles, 1.0)
+		simulation_manager.stepSimulation(client_id)
+		time.sleep(0.1)
 
-for idx in [0,15]:
-	train_trajs_sample = train_trajs[idx:idx+15]
-	model = pbd.HSMM(nb_dim=train_trajs_sample[0].shape[-1], nb_states=6)
-	model.init_hmm_kbins(train_trajs_sample)
-	model.em(train_trajs_sample)
+# for idx in [0,15]:
+# 	train_trajs_sample = train_trajs[idx:idx+15]
+# 	model = pbd.HSMM(nb_dim=train_trajs_sample[0].shape[-1], nb_states=6)
+# 	model.init_hmm_kbins(train_trajs_sample)
+# 	model.em(train_trajs_sample)
 
+# 	if idx == 0:
+# 		np.save('models_test/handshake_hri.npy',model)
+# 	elif idx == 15:
+# 		np.save('models_test/rocket_hri.npy',model)
 
-	if idx == 0:
-		np.save('models_test/handshake_hri.npy',model)
-	elif idx == 15:
-		np.save('models_test/rocket_hri.npy',model)
-
-simulation_manager.stopSimulation(client_id)
+# simulation_manager.stopSimulation(client_id)

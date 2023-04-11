@@ -96,7 +96,8 @@ class NuitrackWrapper:
 			x = (round(data.skeletons[0][i].projection[0]), round(data.skeletons[0][i].projection[1]))
 			cv2.circle(display_img, x, 15, point_color, -1)
 			skeleton[i-1] = data.skeletons[0][i].real * 0.001
-
+		
+		skeleton[:, 1] *= -1
 		return display_img, skeleton
 
 	def __del__(self):
@@ -109,7 +110,6 @@ class NuitrackROS(NuitrackWrapper):
 		rpy = [rospy.get_param("/tf_dynreconf_node/roll"), rospy.get_param("/tf_dynreconf_node/pitch"), rospy.get_param("/tf_dynreconf_node/yaw")]
 		super().__init__(xyz, rpy, height, width, horizontal)
 		
-		self._camera_link = camera_link
 		intrinsics = intrinsics_horizontal if horizontal else intrinsics_vertical
 		K = intrinsics[(self._width, self._height)]
 
@@ -170,10 +170,10 @@ class NuitrackROS(NuitrackWrapper):
 			
 	def update(self):
 		display_img, skeleton = super().update()
-		if display_img is None:
-			return None, [], None
-		self._header.seq += 1
 		self._header.stamp = rospy.Time.now()
+		if display_img is None:
+			return None, [], self._header.stamp
+		self._header.seq += 1
 
 		self.publish_img(self._color_pub, self._color_img, "bgr8")
 		self.publish_img(self._display_pub, display_img, "bgr8")
@@ -186,17 +186,17 @@ class NuitrackROS(NuitrackWrapper):
 		if self._viz_pub.get_num_connections() > 0 and len(skeleton)>0:
 			for i in range(14):
 				self._markerarray_msg.markers[i].pose.position.x = skeleton[i,0]
-				self._markerarray_msg.markers[i].pose.position.y = -skeleton[i,1]
+				self._markerarray_msg.markers[i].pose.position.y = skeleton[i,1]
 				self._markerarray_msg.markers[i].pose.position.z = skeleton[i,2]
 				self._markerarray_msg.markers[i].header = self._header
 
 			for i in range(len(connections)):
 				bone = connections[i]
 				self._markerarray_msg.markers[i+14].points[0].x = skeleton[joints_idx[bone[0]]-1,0]
-				self._markerarray_msg.markers[i+14].points[0].y = -skeleton[joints_idx[bone[0]]-1,1]
+				self._markerarray_msg.markers[i+14].points[0].y = skeleton[joints_idx[bone[0]]-1,1]
 				self._markerarray_msg.markers[i+14].points[0].z = skeleton[joints_idx[bone[0]]-1,2]
 				self._markerarray_msg.markers[i+14].points[1].x = skeleton[joints_idx[bone[1]]-1,0]
-				self._markerarray_msg.markers[i+14].points[1].y = -skeleton[joints_idx[bone[1]]-1,1]
+				self._markerarray_msg.markers[i+14].points[1].y = skeleton[joints_idx[bone[1]]-1,1]
 				self._markerarray_msg.markers[i+14].points[1].z = skeleton[joints_idx[bone[1]]-1,2]
 				self._markerarray_msg.markers[i+14].header = self._header
 			self._viz_pub.publish(self._markerarray_msg)
@@ -217,8 +217,7 @@ if __name__=="__main__":
 	while not rospy.is_shutdown():
 		display_img, skeleton, stamp = nuitrack.update()
 		if len(skeleton)>0:
-			hand_pose = skeleton[-1,:]
-			hand_pose[1] *= -1
+			hand_pose = skeleton[-1, :]
 			hand_pose = nuitrack.base2cam[:3,:3].dot(hand_pose) + nuitrack.base2cam[:3,3]
 			t.transform.translation.x = hand_pose[0]
 			t.transform.translation.y = hand_pose[1]
