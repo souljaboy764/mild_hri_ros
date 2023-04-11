@@ -343,7 +343,8 @@
     <child link="RBicep"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <axis xyz="0 0 1.0"/>
-    <limit effort="2.666" lower="-1.56207" upper="-0.109" velocity="9.22756"/>
+    <limit effort="2.666" lower="-1.56207" upper="-0.00872665" velocity="9.22756"/>
+    <!-- <limit effort="2.666" lower="-1.56207" upper="-0.109" velocity="9.22756"/> -->
   </joint>
   <link name="RBicep">
     <inertial>
@@ -369,7 +370,8 @@
     <child link="RElbow"/>
     <origin rpy="0 -0.157079 0" xyz="0.1812 -0.015 0.00013"/>
     <axis xyz="1.0 0 0"/>
-    <limit effort="5.428" lower="0.5854" upper="0.9854" velocity="7.33998"/>
+    <limit effort="5.428" lower="-2.08567" upper="2.08567" velocity="7.33998"/>
+    <!-- <limit effort="5.428" lower="0.5854" upper="0.9854" velocity="7.33998"/> -->
   </joint>
   <link name="RElbow">
     <inertial>
