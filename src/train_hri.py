@@ -64,15 +64,15 @@ for i in [0,5,10,15,20,28]:
 		simulation_manager.stepSimulation(client_id)
 		time.sleep(0.1)
 
-# for idx in [0,15]:
-# 	train_trajs_sample = train_trajs[idx:idx+15]
-# 	model = pbd.HSMM(nb_dim=train_trajs_sample[0].shape[-1], nb_states=6)
-# 	model.init_hmm_kbins(train_trajs_sample)
-# 	model.em(train_trajs_sample)
+for idx in [0,15]:
+	train_trajs_sample = train_trajs[idx:idx+15]
+	model = pbd.HSMM(nb_dim=train_trajs_sample[0].shape[-1], nb_states=6)
+	model.init_hmm_kbins(train_trajs_sample)
+	model.em(train_trajs_sample)
 
-# 	if idx == 0:
-# 		np.save('models_test/handshake_hri.npy',model)
-# 	elif idx == 15:
-# 		np.save('models_test/rocket_hri.npy',model)
+	if idx == 0:
+		np.save('models_test/handshake_hri.npy',model)
+	elif idx == 15:
+		np.save('models_test/rocket_hri.npy',model)
 
 # simulation_manager.stopSimulation(client_id)
