@@ -2,41 +2,13 @@ import numpy as np
 import scipy.optimize as opt
 from check_selfcollision.srv import *
 from moveit_msgs.msg import RobotState
-from utils import *
+from utils.helper import *
 import rospy
 
 # Pepper Joint limits
 lower_bounds = np.array([-2.0857, -1.5621, -2.0857, 0.009])
 upper_bounds = np.array([2.0857, -0.009, 2.0857, 1.5621])
 bounds = ((lower_bounds[0], upper_bounds[0]),(lower_bounds[1], upper_bounds[1]),(lower_bounds[2], upper_bounds[2]),(lower_bounds[3], upper_bounds[3]))
-
-def angle(a,b):
-	dot = np.dot(a,b)
-	return np.arccos(dot/(np.linalg.norm(a)*np.linalg.norm(b)))
-
-def projectToPlane(plane, vec):
-	return (vec - plane)*np.dot(plane,vec)
-
-def cross(a:np.ndarray,b:np.ndarray)->np.ndarray:
-	return np.cross(a,b)
-
-def rotation_normalization(skeleton):
-	leftShoulder = skeleton[joints_idx["left_shoulder"]-1]
-	rightShoulder = skeleton[joints_idx["right_shoulder"]-1]
-	waist = skeleton[joints_idx["waist"]-1]
-	
-	yAxisHelper = waist - rightShoulder
-	xAxis = leftShoulder - rightShoulder # right to left
-	yAxis = cross(xAxis, yAxisHelper) # out of the human(like an arrow in the back)
-	zAxis = cross(xAxis, yAxis) # like spine, but straight
-	
-	xAxis /= np.linalg.norm(xAxis)
-	yAxis /= np.linalg.norm(yAxis)
-	zAxis /= np.linalg.norm(zAxis)
-
-	return np.array([[xAxis[0], xAxis[1], xAxis[2]],
-					 [yAxis[0], yAxis[1], yAxis[2]],
-					 [zAxis[0], zAxis[1], zAxis[2]]])
 
 # Assumes that the skeletons are already rotated such that the front 
 def joint_angle_extraction(skeleton): # Based on the Pepper Robot Kinematics

@@ -1,7 +1,5 @@
 import numpy as np
 
-from utils import *
-
 joints = ["none", "head", "neck", "torso", "waist", "left_collar", "left_shoulder", "left_elbow", "left_wrist", "left_hand", "right_collar", "right_shoulder", "right_elbow", "right_wrist", "right_hand", "left_hip", "left_knee", "left_ankle", "right_hip", "right_knee", "right_ankle"]
 joints_idx = {joints[i]:i for i in range(len(joints))}
 connections = [

@@ -185,9 +185,7 @@ class NuitrackROS(NuitrackWrapper):
 		
 		if self._viz_pub.get_num_connections() > 0 and len(skeleton)>0:
 			for i in range(14):
-				self._markerarray_msg.markers[i].pose.position.x = skeleton[i,0]
-				self._markerarray_msg.markers[i].pose.position.y = skeleton[i,1]
-				self._markerarray_msg.markers[i].pose.position.z = skeleton[i,2]
+				self._markerarray_msg.markers[i].pose = mat2Pose(skeleton[i])
 				self._markerarray_msg.markers[i].header = self._header
 
 			for i in range(len(connections)):
@@ -212,16 +210,13 @@ if __name__=="__main__":
 	t.header.frame_id = 'base_footprint'
 	t.child_frame_id = 'hand'
 	broadcaster = tf2_ros.StaticTransformBroadcaster()
-	t.transform.rotation.w = 1.
-
+	
 	while not rospy.is_shutdown():
 		display_img, skeleton, stamp = nuitrack.update()
 		if len(skeleton)>0:
 			hand_pose = skeleton[-1, :]
 			hand_pose = nuitrack.base2cam[:3,:3].dot(hand_pose) + nuitrack.base2cam[:3,3]
-			t.transform.translation.x = hand_pose[0]
-			t.transform.translation.y = hand_pose[1]
-			t.transform.translation.z = hand_pose[2]
+			t.transform = mat2TF(hand_pose)
 			t.header.stamp = stamp
 			broadcaster.sendTransform(t)
 		rate.sleep()
