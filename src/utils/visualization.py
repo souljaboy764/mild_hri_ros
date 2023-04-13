@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
 import pbdlib as pbd
 
-from utils import *
+from visualization_msgs.msg import MarkerArray, Marker
+import rospy
+
+from utils.helper import *
+from utils.nuitrack import *
 
 point_color = (0, 255, 0)
 line_color = (0, 0, 225)
@@ -81,3 +85,34 @@ def plot_pbd(ax, model, alpha_hsmm=None):
 						n_points=20, n_rings=15, color='red', alpha=alpha_hsmm[i, -1])
 	for k in range(model.nb_states):
 		ax.text(model.mu[k,0], model.mu[k,1], model.mu[k,2],  '%s' % (str(k)), size=25, zorder=1, color='k')
+
+def rviz_gmm3d(model, nstd=3, frame_id='base_footprint'):
+	markerarray_msg = MarkerArray()
+	T = np.eye(4)
+	for i in range(model.nb_states):
+		marker = Marker()
+		marker.id = i
+		marker.lifetime = rospy.Duration(20)
+		marker.frame_locked = True
+		marker.action = Marker.ADD
+		marker.type = Marker.SPHERE
+		marker.color.a = 0.5
+		marker.color.b = 1
+		marker.header.frame_id = frame_id
+
+		eigvals, eigvecs = np.linalg.eig(model.sigma[i,:3,:3])
+		eigvecs[:, 0] /= np.linalg.norm(eigvecs[:, 0])
+		eigvecs[:, 1] /= np.linalg.norm(eigvecs[:, 1])
+		eigvecs[:, 2] /= np.linalg.norm(eigvecs[:, 2])
+		# Ensure right handed notation of rotation matrix
+		if np.cross(eigvecs[:, 0], eigvecs[:, 1]).dot(eigvecs[:, 2]) < 0:
+			eigvecs[:, [0,1]] = eigvecs[:, [1,0]]
+			eigvals[[0,1]] = eigvals[[1,0]]
+
+		marker.scale.x, marker.scale.y, marker.scale.z = nstd * np.sqrt(eigvals)
+		T[:3,:3] = eigvecs
+		T[:3,3] = model.mu[i, :3]
+		marker.pose = mat2Pose(T)
+		
+		markerarray_msg.markers.append(marker)
+	return markerarray_msg
