@@ -96,7 +96,7 @@ class HSMMIKController(BaseIKController):
 		
 		mu_est_hsmm, sigma_est_hsmm = pbd.Model.condition(self.model, self.history[-1:], dim_in=slice(0, 6), dim_out=slice(6, 10), h=alpha_hsmm)
 		# self.joint_trajectory.points[0].positions[:4] = mu_est_hsmm[0]
-		self.ik_result[:4] = mu_est_hsmm[0]
+		# self.ik_result[:4] = mu_est_hsmm[0]
 		super().step(nui_skeleton, hand_pose)
 	
 	def publish(self, stamp):
@@ -133,7 +133,7 @@ if __name__=='__main__':
 			controller.joint_trajectory.points[0].effort[0] = 0.7
 		else:
 			controller.joint_trajectory.points[0].effort[0] = 0.1
-		if sum(controller.predicted_segment[-6:])>=30 or (len(controller.history) > 50 and controller.predicted_segment[-1]==controller.model.nb_states - 1): # if it's the last segment, then that means you're going back to the final position
+		if sum(controller.predicted_segment[-6:])>=5*controller.model.nb_states or (len(controller.history) > 50 and controller.predicted_segment[-1]==controller.model.nb_states - 1): # if it's the last segment, then that means you're going back to the final position
 			controller.state_msg.state.joint_state.position[11:17] = controller.joint_trajectory.points[0].positions = default_arm_joints
 			controller.publish(stamp)
 			controller.publish(stamp)

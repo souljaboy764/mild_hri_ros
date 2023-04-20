@@ -37,7 +37,6 @@ class BaseIKController:
 		self.hand_tf.child_frame_id = 'hand'
 		self.hand_tf.transform.rotation.w = 1.
 
-		# To visualise the expected state. Using both left and right arms otherwise the left arm is always raised
 		self.state_msg = DisplayRobotState()
 		self.state_msg.state.joint_state.header.frame_id = "base_footprint"
 
@@ -80,7 +79,7 @@ class BaseIKController:
 	
 	def publish(self, stamp):
 		self.state_msg.state.joint_state.header.stamp = self.target_tf.header.stamp = self.hand_tf.header.stamp = self.joint_trajectory.header.stamp = stamp
-		# self.send_target(self.joint_trajectory)
+		self.send_target(self.joint_trajectory)
 		self.broadcaster.sendTransform([self.target_tf, self.hand_tf])
 		self.state_pub.publish(self.state_msg)
 
@@ -113,20 +112,20 @@ if __name__=='__main__':
 	rate.sleep()
 	while not rospy.is_shutdown():
 		nui_skeleton, hand_pose, stamp = controller.observe_human()
-		controller.joint_trajectory.points[0].effort[0] = 0.2
+		controller.joint_trajectory.points[0].effort[0] = 0.7
 		count += 1
 		if count < 20:
 			controller.publish(stamp)
 			rate.sleep()
 			continue
 		elif count >100:
-			controller.joint_trajectory.points[0].effort[0] = 0.2
+			controller.joint_trajectory.points[0].effort[0] = 0.1
 		controller.step(nui_skeleton, hand_pose)
 		controller.publish(stamp)
 		rate.sleep()
 		if hand_pose is not None:
 			if prev_z is not None:
-				if hand_pose[2] < 0.65 and hand_pose[2] - prev_z < -0.001:
+				if count >100 and hand_pose[2] < 0.8 and hand_pose[2] - prev_z < -0.005:
 					controller.joint_trajectory.points[0].positions = default_arm_joints
 					controller.publish(stamp)
 					rate.sleep()

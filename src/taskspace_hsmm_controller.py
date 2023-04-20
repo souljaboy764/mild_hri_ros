@@ -159,11 +159,11 @@ if __name__=='__main__':
 		if controller.predicted_segment[-1] in [0, controller.model.nb_states - 1]:
 			controller.joint_trajectory.points[0].effort[0] = 0.7
 		# elif np.linalg.norm(np.array(controller.joint_readings[:4]) - np.array(controller.joint_trajectory.points[0].positions[:4])) > 0.25 :
-		elif len(controller.history) < 60:
+		elif len(controller.history) < 70:
 			controller.joint_trajectory.points[0].effort[0] = 0.7
 		else:
-			controller.joint_trajectory.points[0].effort[0] = 0.1
-		if sum(controller.predicted_segment[-6:])>=30 or (len(controller.history) > 50 and controller.predicted_segment[-1]==controller.model.nb_states - 1): # if it's the last segment, then that means you're going back to the final position
+			controller.joint_trajectory.points[0].effort[0] = 0.2
+		if sum(controller.predicted_segment[-6:])>=5*controller.model.nb_states or (len(controller.history) > 50 and controller.predicted_segment[-1]==controller.model.nb_states - 1): # if it's the last segment, then that means you're going back to the final position
 			controller.state_msg.state.joint_state.position[11:17] = controller.joint_trajectory.points[0].positions = default_arm_joints
 			spin()
 			break
