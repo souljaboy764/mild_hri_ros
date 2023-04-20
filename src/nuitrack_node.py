@@ -27,61 +27,61 @@ class NuitrackWrapper:
 		self.base2cam[:3, 3] = np.array(origin_xyz)
 
 		self.init_nuitrack()
-		print("Nuitrack Version:", self._nuitrack.get_version())
-		print("Nuitrack License:", self._nuitrack.get_license())
+		print("Nuitrack Version:", self.nuitrack.get_version())
+		print("Nuitrack License:", self.nuitrack.get_license())
 	
 	def init_nuitrack(self):
-		self._nuitrack = py_nuitrack.Nuitrack()
-		self._nuitrack.init()
+		self.nuitrack = py_nuitrack.Nuitrack()
+		self.nuitrack.init()
 
-		self._nuitrack.set_config_value("DepthProvider.Depth2ColorRegistration", "true")
+		self.nuitrack.set_config_value("DepthProvider.Depth2ColorRegistration", "true")
 		if not self._horizontal:
-			self._nuitrack.set_config_value("DepthProvider.RotateAngle", "270")
+			self.nuitrack.set_config_value("DepthProvider.RotateAngle", "270")
 
 		# Realsense Depth Module - force to 848x480 @ 30 FPS
-		self._nuitrack.set_config_value("Realsense2Module.Depth.Preset", "5")
-		self._nuitrack.set_config_value("Realsense2Module.Depth.RawWidth", str(self._width))
-		self._nuitrack.set_config_value("Realsense2Module.Depth.RawHeight", str(self._height))
-		self._nuitrack.set_config_value("Realsense2Module.Depth.ProcessWidth", str(self._width))
-		self._nuitrack.set_config_value("Realsense2Module.Depth.ProcessHeight", str(self._height))
-		self._nuitrack.set_config_value("Realsense2Module.Depth.FPS", "30")
+		self.nuitrack.set_config_value("Realsense2Module.Depth.Preset", "5")
+		self.nuitrack.set_config_value("Realsense2Module.Depth.RawWidth", str(self._width))
+		self.nuitrack.set_config_value("Realsense2Module.Depth.RawHeight", str(self._height))
+		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessWidth", str(self._width))
+		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessHeight", str(self._height))
+		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "30")
 
 		# Realsense RGB Module - force to 848x480 @ 30 FPS
-		self._nuitrack.set_config_value("Realsense2Module.RGB.RawWidth", str(self._width))
-		self._nuitrack.set_config_value("Realsense2Module.RGB.RawHeight", str(self._height))
-		self._nuitrack.set_config_value("Realsense2Module.RGB.ProcessWidth", str(self._width))
-		self._nuitrack.set_config_value("Realsense2Module.RGB.ProcessHeight", str(self._height))
-		self._nuitrack.set_config_value("Realsense2Module.RGB.FPS", "30")
+		self.nuitrack.set_config_value("Realsense2Module.RGB.RawWidth", str(self._width))
+		self.nuitrack.set_config_value("Realsense2Module.RGB.RawHeight", str(self._height))
+		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessWidth", str(self._width))
+		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessHeight", str(self._height))
+		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "30")
 
-		devices = self._nuitrack.get_device_list()
+		devices = self.nuitrack.get_device_list()
 		for i, dev in enumerate(devices):
 			print(dev.get_name(), dev.get_serial_number())
 			if i == 0:
 				#dev.activate("ACTIVATION_KEY") #you can activate device using python api
 				print(dev.get_activation())
-				self._nuitrack.set_device(dev)
+				self.nuitrack.set_device(dev)
 
-		self._nuitrack.create_modules()
-		self._nuitrack.run()
+		self.nuitrack.create_modules()
+		self.nuitrack.run()
 
 	def reset_nuitrack(self):
 		try:
-			self._nuitrack.release()
+			self.nuitrack.release()
 		except:
 			print("Could not release Nuitrack, just resetting it")
 
 		self.init_nuitrack()
 
 	def update(self):
-		self._nuitrack.update()
+		self.nuitrack.update()
 		
-		self._depth_img = self._nuitrack.get_depth_data()
-		self._color_img = self._nuitrack.get_color_data()
+		self._depth_img = self.nuitrack.get_depth_data()
+		self._color_img = self.nuitrack.get_color_data()
 		if not self._depth_img.size or not self._color_img.size:
 			return None, []
 		display_img = self._color_img.copy()
 
-		data = self._nuitrack.get_skeleton()
+		data = self.nuitrack.get_skeleton()
 		if len(data.skeletons)==0:
 			return display_img, []
 
@@ -101,7 +101,7 @@ class NuitrackWrapper:
 		return display_img, skeleton
 
 	def __del__(self):
-		self._nuitrack.release()
+		self.nuitrack.release()
 
 class NuitrackROS(NuitrackWrapper):
 	def __init__(self, height=480, width=848, camera_link='camera_color_optical_frame', horizontal=False):

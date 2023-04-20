@@ -63,7 +63,6 @@ class BaseIKController:
 		if len(msg.name)<=6:
 			return
 		self.joint_readings = msg.position[11:17]
-		print(self.joint_readings[4])
 		self.state_msg.state.joint_state = msg
 		self.state_msg.state.joint_state.position = list(self.state_msg.state.joint_state.position)
 		self.state_msg.state.joint_state.position[11:17] = list(self.joint_trajectory.points[0].positions)
@@ -74,16 +73,14 @@ class BaseIKController:
 			return [], None, stamp
 		
 		hand_pose = self.nuitrack.base2cam[:3,:3].dot(nui_skeleton[-1, :]) + self.nuitrack.base2cam[:3,3]
-		target_pose = hand_pose - self.offset
 
 		self.hand_tf.transform = mat2TF(hand_pose)
-		self.target_tf.transform = mat2TF(target_pose)
 		
 		return nui_skeleton, hand_pose, stamp
 	
 	def publish(self, stamp):
 		self.state_msg.state.joint_state.header.stamp = self.target_tf.header.stamp = self.hand_tf.header.stamp = self.joint_trajectory.header.stamp = stamp
-		self.send_target(self.joint_trajectory)
+		# self.send_target(self.joint_trajectory)
 		self.broadcaster.sendTransform([self.target_tf, self.hand_tf])
 		self.state_pub.publish(self.state_msg)
 
@@ -97,11 +94,11 @@ class BaseIKController:
 	def step(self, nui_skeleton, hand_pose):
 		if len(nui_skeleton)==0 or hand_pose is None:
 			return
+		self.target_tf.transform = mat2TF(hand_pose)
 		target_pose = self.in_baselink(hand_pose)
 		frame_target = np.eye(4)
 		frame_target[:3, 3] = target_pose
-		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result)
-
+		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result, optimizer = "scalar")
 		rarm_joints = self.ik_result[2:6].tolist()
 		self.joint_trajectory.points[0].positions = 0.3*np.array(self.joint_trajectory.points[0].positions) + 0.7*np.array(rarm_joints + [1.8239, 0.75])
 	
@@ -116,6 +113,7 @@ if __name__=='__main__':
 	rate.sleep()
 	while not rospy.is_shutdown():
 		nui_skeleton, hand_pose, stamp = controller.observe_human()
+		controller.joint_trajectory.points[0].effort[0] = 0.2
 		count += 1
 		if count < 20:
 			controller.publish(stamp)
@@ -123,13 +121,11 @@ if __name__=='__main__':
 			continue
 		elif count >100:
 			controller.joint_trajectory.points[0].effort[0] = 0.2
-		
 		controller.step(nui_skeleton, hand_pose)
 		controller.publish(stamp)
 		rate.sleep()
 		if hand_pose is not None:
 			if prev_z is not None:
-				print(hand_pose[2] - prev_z)
 				if hand_pose[2] < 0.65 and hand_pose[2] - prev_z < -0.001:
 					controller.joint_trajectory.points[0].positions = default_arm_joints
 					controller.publish(stamp)

@@ -7,6 +7,9 @@
 		<arg name="robot_ip" value="$(arg robot_ip)"/>
 		<arg name="network_interface" value="$(arg network_interface)"/>
 	</include>
+	<!-- <include file="$(find pepper_moveit_config)/launch/demo.launch" >
+		<arg name="use_rviz" value="false"/>
+	</include> -->
 
 	<node pkg="nodelet" type="nodelet" args="manager" name="standalone_nodelet" output="screen"/>
 	<node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">

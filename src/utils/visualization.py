@@ -77,16 +77,15 @@ def plot_skeleton(ax, skeleton):
 	ax.scatter(skeleton[:-1, 0], skeleton[:-1, 1], skeleton[:-1, 2], c='g', marker='o', s=100)
 	ax.scatter(skeleton[-1:, 0], skeleton[-1:, 1], skeleton[-1:, 2], c='g', marker='o', s=200)
 
-def plot_pbd(ax, model, alpha_hsmm=None):
-	pbd.plot_gmm3d(ax, model.mu[:,:3], model.sigma[:,:3,:3], color='blue', alpha=0.1)
-	if alpha_hsmm is not None:
+def plot_pbd(ax, model, alpha_hsmm=None, dims = slice(0,3), color='red'):
+	if alpha_hsmm is None:
+		pbd.plot_gmm3d(ax, model.mu[:,dims], model.sigma[:,dims,dims], color=color, alpha=0.3)
+	else:
 		for i in range(model.nb_states):
-			pbd.plot_gauss3d(ax, model.mu[i,:3], model.sigma[i,:3,:3],
-						n_points=20, n_rings=15, color='red', alpha=alpha_hsmm[i, -1])
-	for k in range(model.nb_states):
-		ax.text(model.mu[k,0], model.mu[k,1], model.mu[k,2],  '%s' % (str(k)), size=25, zorder=1, color='k')
+			pbd.plot_gauss3d(ax, model.mu[i,dims], model.sigma[i,dims,dims],
+						n_points=20, n_rings=15, color='blue', alpha=alpha_hsmm[i])
 
-def rviz_gmm3d(model, nstd=3, frame_id='base_footprint'):
+def rviz_gmm3d(model, nstd=3, dims = slice(0,3), rgb = [0,0,1], frame_id='base_footprint'):
 	markerarray_msg = MarkerArray()
 	T = np.eye(4)
 	for i in range(model.nb_states):
@@ -97,10 +96,12 @@ def rviz_gmm3d(model, nstd=3, frame_id='base_footprint'):
 		marker.action = Marker.ADD
 		marker.type = Marker.SPHERE
 		marker.color.a = 0.5
-		marker.color.b = 1
+		marker.color.r = rgb[0]
+		marker.color.g = rgb[1]
+		marker.color.b = rgb[2]
 		marker.header.frame_id = frame_id
 
-		eigvals, eigvecs = np.linalg.eig(model.sigma[i,:3,:3])
+		eigvals, eigvecs = np.linalg.eig(model.sigma[i,dims,dims])
 		eigvecs[:, 0] /= np.linalg.norm(eigvecs[:, 0])
 		eigvecs[:, 1] /= np.linalg.norm(eigvecs[:, 1])
 		eigvecs[:, 2] /= np.linalg.norm(eigvecs[:, 2])
@@ -111,7 +112,7 @@ def rviz_gmm3d(model, nstd=3, frame_id='base_footprint'):
 
 		marker.scale.x, marker.scale.y, marker.scale.z = nstd * np.sqrt(eigvals)
 		T[:3,:3] = eigvecs
-		T[:3,3] = model.mu[i, :3]
+		T[:3,3] = model.mu[i, dims]
 		marker.pose = mat2Pose(T)
 		
 		markerarray_msg.markers.append(marker)
