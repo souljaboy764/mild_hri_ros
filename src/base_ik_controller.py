@@ -54,7 +54,7 @@ class BaseIKController:
 
 		self.offset = np.array([0.0,0.0,0])
 		self.nuitrack = NuitrackROS(height=480, width=848, horizontal=False)
-		self.ik_result = [0.0, 1.5708, -0.109, 0.7854, 0.009, 1.8239, 0.0 , 0.0, 0.0]
+		self.ik_result = np.array([0.0, 1.5708, -0.109, 0.7854, 0.009, 1.8239, 0.0 , 0.0, 0.0])
 
 		self.joint_state_sub = rospy.Subscriber('/joint_states', JointState, self.joint_state_cb)
 
@@ -90,16 +90,16 @@ class BaseIKController:
 		hand_pose = link_transform[:3,:3].dot(hand_pose) + link_transform[:3,3]
 		return hand_pose - self.offset
 	
-	def step(self, nui_skeleton, hand_pose):
+	def step(self, nui_skeleton, hand_pose, **kwargs):
 		if len(nui_skeleton)==0 or hand_pose is None:
 			return
 		self.target_tf.transform = mat2TF(hand_pose)
 		target_pose = self.in_baselink(hand_pose)
 		frame_target = np.eye(4)
 		frame_target[:3, 3] = target_pose
-		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result, optimizer = "scalar")
+		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result, optimizer = "scalar", **kwargs)
 		rarm_joints = self.ik_result[2:6].tolist()
-		self.joint_trajectory.points[0].positions = 0.3*np.array(self.joint_trajectory.points[0].positions) + 0.7*np.array(rarm_joints + [1.8239, 0.75])
+		self.joint_trajectory.points[0].positions = 0.5*np.array(self.joint_trajectory.points[0].positions) + 0.5*np.array(rarm_joints + [1.8239, 0.75])
 	
 if __name__=='__main__':
 	rospy.init_node('hri_ik_node')
@@ -110,35 +110,26 @@ if __name__=='__main__':
 	prev_z = None
 	stop_counter = 0
 	rate.sleep()
+	controller.joint_trajectory.points[0].effort[0] = 0.7
 	while not rospy.is_shutdown():
 		nui_skeleton, hand_pose, stamp = controller.observe_human()
-		controller.joint_trajectory.points[0].effort[0] = 0.7
-		count += 1
+		if len(nui_skeleton)!=0:
+			count += 1
 		if count < 20:
 			controller.publish(stamp)
 			rate.sleep()
 			continue
-		elif count >100:
+		elif count >80 and controller.joint_readings[0] < 0.4:
 			controller.joint_trajectory.points[0].effort[0] = 0.1
+		print(controller.joint_trajectory.points[0].effort[0], controller.joint_readings[0])
 		controller.step(nui_skeleton, hand_pose)
 		controller.publish(stamp)
 		rate.sleep()
 		if hand_pose is not None:
 			if prev_z is not None:
-				if count >100 and hand_pose[2] < 0.8 and hand_pose[2] - prev_z < -0.005:
+				if count >100 and hand_pose[2] < 0.9 and hand_pose[2] - prev_z < -0.005:
 					controller.joint_trajectory.points[0].positions = default_arm_joints
 					controller.publish(stamp)
 					rate.sleep()
 					rospy.signal_shutdown('done')
 			prev_z = hand_pose[2]
-
-
-		# if hand_pose is not None and hand_pose[2] < 0.8:
-		# 	stop_counter+= 1
-		# else:
-		# 	stop_counter = 0		
-		# if stop_counter>10:
-		# 	controller.joint_trajectory.points[0].positions = default_arm_joints
-		# 	controller.publish(stamp)
-		# 	rate.sleep()
-		# 	rospy.signal_shutdown('Done')
