@@ -88,16 +88,18 @@ class HSMMIKController(BaseIKController):
 		self.history = np.vstack([self.history, np.concatenate([nui_skeleton[-1,:], nui_skeleton[-1,:] - self.history[-1, :3]])])
 		
 		alpha_hsmm = self.hsmm_step()
-		# alpha_hsmm = forward_variable(self.model, len(self.history), np.array(self.history), slice(0, 6))
-		active_segment = alpha_hsmm.argmax()
+		if np.allclose(alpha_hsmm, alpha_hsmm[0], atol=0.0001):
+			active_segment = self.predicted_segment[-1]
+		else:
+			active_segment = alpha_hsmm.argmax()
 		self.predicted_segment.append(active_segment)
 		for i in range(len(alpha_hsmm)):
 			self.markerarray_msg.markers[i].color.a = max(0.2, alpha_hsmm[i])
 		
 		mu_est_hsmm, sigma_est_hsmm = pbd.Model.condition(self.model, self.history[-1:], dim_in=slice(0, 6), dim_out=slice(6, 10), h=alpha_hsmm)
-		# self.joint_trajectory.points[0].positions[:4] = mu_est_hsmm[0]
-		# self.ik_result[:4] = mu_est_hsmm[0]
-		super().step(nui_skeleton, hand_pose)
+		self.ik_result[2:6] = mu_est_hsmm[0]
+		sigma_est_hsmm[0] += np.eye(mu_est_hsmm[0].shape[0])*1e-3
+		super().step(nui_skeleton, hand_pose, regularization_parameter = [np.eye(3)*100, np.linalg.inv(sigma_est_hsmm[0]), 0.01])
 	
 	def publish(self, stamp):
 		super().publish(stamp)
@@ -127,12 +129,13 @@ if __name__=='__main__':
 			continue
 		controller.step(nui_skeleton, hand_pose)
 		if controller.predicted_segment[-1] in [0, controller.model.nb_states - 1]:
-			controller.joint_trajectory.points[0].effort[0] = 0.7
+			controller.joint_trajectory.points[0].effort[0] = min(controller.joint_trajectory.points[0].effort[0] + 0.15, 0.7)
 		# elif np.linalg.norm(np.array(controller.joint_readings[:4]) - np.array(controller.joint_trajectory.points[0].positions[:4])) > 0.25 :
 		elif len(controller.history) < 60:
 			controller.joint_trajectory.points[0].effort[0] = 0.7
 		else:
 			controller.joint_trajectory.points[0].effort[0] = 0.1
+		print(controller.joint_trajectory.points[0].effort[0])
 		if sum(controller.predicted_segment[-6:])>=5*controller.model.nb_states or (len(controller.history) > 50 and controller.predicted_segment[-1]==controller.model.nb_states - 1): # if it's the last segment, then that means you're going back to the final position
 			controller.state_msg.state.joint_state.position[11:17] = controller.joint_trajectory.points[0].positions = default_arm_joints
 			controller.publish(stamp)
