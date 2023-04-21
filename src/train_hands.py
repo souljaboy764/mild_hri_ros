@@ -13,6 +13,8 @@ parser.add_argument('--num-states', default=6, type=int, metavar='N_STATES',
                     help='Number of states in the underlying HSMM (default: 6)')
 parser.add_argument('--action', type=str, default='handshake', metavar='ACTION', choices=['handshake', 'rocket'],
 						help='Which interaction to train (handshake or rocket)')
+parser.add_argument('--use-vel', action='store_true',
+                    help='Whether the partner\'s velocity should be used.')
 parser.add_argument('--dst', type=str, metavar='DST', required=True,
                     help='Destination Folder where the model files to be stored.')
 args = parser.parse_args()
@@ -25,12 +27,20 @@ train_data = [np.concatenate([traj[:, :30].reshape((-1,10,3)),traj[:, 30:].resha
 test_data = [np.concatenate([traj[:, :30].reshape((-1,10,3)),traj[:, 30:].reshape((-1,10,3))], -1) for traj in data['test_data']]
 
 for i in range(len(train_data)):
-	train_data[i][:,:,3] = -0.3 - train_data[i][:,:,3]
-	train_data[i][:,:,4] = 0.85 - train_data[i][:,:,4]
+	train_data[i][:,:,[0,1]] = train_data[i][:,:,[1,0]]
+	train_data[i][:,:,[3,4]] = train_data[i][:,:,[4,3]]
+	train_data[i][:,:,1] *= -1
+	train_data[i][:,:,4] *= -1
+	train_data[i][:,:,3] = 0.9 - train_data[i][:,:,3]
+	train_data[i][:,:,4] = 0.2 - train_data[i][:,:,4]
 
 for i in range(len(test_data)):
-	test_data[i][:,:,3] = -0.3 - test_data[i][:,:,3]
-	test_data[i][:,:,4] = 0.85 - test_data[i][:,:,4]
+	test_data[i][:,:,[0,1]] = test_data[i][:,:,[1,0]]
+	test_data[i][:,:,[3,4]] = test_data[i][:,:,[4,3]]
+	test_data[i][:,:,1] *= -1
+	test_data[i][:,:,4] *= -1
+	test_data[i][:,:,3] = 0.9 - test_data[i][:,:,3]
+	test_data[i][:,:,4] = 0.2 - test_data[i][:,:,4]
 
 train_data = [traj[:,-1,:] for traj in train_data]
 test_data = [traj[:,-1,:] for traj in test_data]
@@ -41,9 +51,48 @@ test_data = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:3
 idx = 0 if args.action=='handshake' else 15
 train_trajs = train_data[idx:idx+15] # 15 trajs used for training
 
-model = pbd.HSMM(nb_dim=train_trajs[0].shape[-1], nb_states=args.num_states)
-model.init_hmm_kbins(train_trajs)
-model.em(train_trajs)
+if args.num_states == 0:
+	num_states = np.arange(4,11)
+else:
+	num_states = [args.num_states]
+
+pos_mse = []
+if args.use_vel:
+	vel_mse = []
+	dim_out=slice(6, 12)
+else:
+	dim_out=slice(6, 9)
+models = []
+for states in num_states:
+	model = pbd.HSMM(nb_dim=train_trajs[0].shape[-1], nb_states=states)
+	if not args.use_vel:
+		train_trajs = [i[:, :9] for i in train_trajs]
+	model.init_hmm_kbins(train_trajs)
+	model.em(train_trajs)
+
+	errors = []
+	for i in range(len(test_data)):
+		mu_est_hsmm, sigma_est_hsmm = model.condition(test_data[i][:,:6], dim_in=slice(0, 6), dim_out=dim_out)
+		errors.append((mu_est_hsmm - test_data[i][:,dim_out])**2)
+
+	errors = np.vstack(errors)
+	pos_mse.append(errors[:,:3].sum(1).mean())
+	if args.use_vel:
+		vel_mse .append(errors[:,3:].sum(1).mean())
+	models.append(model)
+
+if args.use_vel:
+	mse = np.array(pos_mse) + np.array(vel_mse)
+else:
+	mse = np.array(pos_mse)
+best_idx = np.argmin(pos_mse)
+model = models[best_idx]
+plt.plot(num_states, pos_mse, label='Position MSE')
+if args.use_vel:
+	plt.plot(num_states, vel_mse, label='Velocity MSE')
+plt.plot(num_states, mse, label='Overall MSE')
+plt.legend()
+plt.show()
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 2, 1, projection='3d')

@@ -7,18 +7,6 @@ from qibullet import SimulationManager
 
 from utils import *
 
-simulation_manager = SimulationManager()
-client_id = simulation_manager.launchSimulation(gui=True)
-pepper = simulation_manager.spawnPepper(
-	client_id,
-	translation=[0, 0, 0],
-	quaternion=[0, 0, 0, 1],
-	spawn_ground_plane=True)
-joint_names = ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw', 'RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'RWristYaw']
-arm_joints = [ 1.57079633, 0.08726646, -1.57079633, -0.01745329, 0., 1.57079633, -0.08726646, 1.57079633, 0.01745329, 0.]
-pepper.setAngles(joint_names, arm_joints, 1.0)
-joint_names = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
-
 data = np.load('data/labelled_sequences_prolonged.npz', allow_pickle=True)
 print([k for k in data.keys()])
 
@@ -35,6 +23,8 @@ train_data = []
 test_data = []
 for traj in data['train_data']:
 	hand_traj = traj[:, 27:30]
+	hand_traj[:, [0,1]] = hand_traj[:, [1,0]]
+	hand_traj[:,1] *= -1
 	joint_traj = np.array([joint_angle_extraction(skeleton) for skeleton in traj[:, 30:].reshape((-1, 10, 3))])
 	train_data.append(np.concatenate([hand_traj, joint_traj], -1))
 
@@ -56,6 +46,18 @@ test_trajs = [np.concatenate([traj[:,:3], np.diff(traj[:,:3], prepend=traj[0:1,:
 # 	pepper.setAngles(joint_names, joint_angles, 1.0)
 # 	simulation_manager.stepSimulation(client_id)
 # 	time.sleep(0.1)
+
+simulation_manager = SimulationManager()
+client_id = simulation_manager.launchSimulation(gui=True)
+pepper = simulation_manager.spawnPepper(
+	client_id,
+	translation=[0, 0, 0],
+	quaternion=[0, 0, 0, 1],
+	spawn_ground_plane=True)
+joint_names = ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw', 'RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'RWristYaw']
+arm_joints = [ 1.57079633, 0.08726646, -1.57079633, -0.01745329, 0., 1.57079633, -0.08726646, 1.57079633, 0.01745329, 0.]
+pepper.setAngles(joint_names, arm_joints, 1.0)
+joint_names = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
 
 for i in [0,5,10,15,20,28]:
 	for x in train_data[i]:
