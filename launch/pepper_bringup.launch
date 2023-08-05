@@ -4,17 +4,23 @@
   <arg name="robot_port"        default="$(optenv NAO_PORT 9559)" />
   <arg name="roscore_ip"        default="127.0.0.1" />
   <arg name="network_interface" default="enxa0cec8c1a425" />
+  <arg name="namespace"         default="naoqi_driver" />
+  <arg name="user"              default="nao" />
+  <arg name="password"          default="no_password" />
 
  	<!-- Call Robot publisher -->
-  <include file="$(find pepper_description)/launch/pepper_publisher.launch" />
+  <include file="$(find pepper_description)/launch/pepper_upload.launch" />
 
   <!-- Call Robot Trajectory Controller -->
   <include file="$(find pepper_controller_server)/launch/pepper_controller_server.launch"/>
 
+
+  <node pkg="naoqi_driver" type="naoqi_driver_node" name="$(arg namespace)" required="true" args="--qi-url=tcp://$(arg robot_ip):$(arg robot_port) --nao_ip=$(arg robot_ip) --nao_port=$(arg robot_port) --user=$(arg user) --password=$(arg password) --roscore_ip=$(arg roscore_ip) --network_interface=$(arg network_interface) --namespace=$(arg namespace)" output="screen" />
+  
   <!-- Call Robot Driver -->
   <node pkg="naoqi_dcm_driver" type="naoqi_dcm_driver" name="naoqi_dcm_driver" respawn="false" output="screen" >
     <!-- Load configurations from YAML file to parameter server -->
-    <rosparam file="$(find segmint-ik)/config/pepper_dcm.yaml" command="load"/>
+    <rosparam file="$(find mild_hri_ros)/config/pepper_dcm.yaml" command="load"/>
     <rosparam file="$(find pepper_controller_server)/config/pepper_rhand_position_stiffness.yaml" command="load"/>
     <param name="RobotIP"             value="$(arg robot_ip)" />
     <param name="RobotPort"           value="$(arg robot_port)" />

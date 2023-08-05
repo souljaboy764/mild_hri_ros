@@ -50,7 +50,7 @@ class BaseIKController:
 		self.joint_trajectory.points[0].positions = default_arm_joints
 		self.joint_trajectory.header.stamp = rospy.Time.now()
 
-		self.pepper_chain = Chain.from_json_file(os.path.join(rospack.get_path('segmint-ik'), "resources", "pepper", "pepper_right_arm.json"))
+		self.pepper_chain = Chain.from_json_file(os.path.join(rospack.get_path('mild_hri_ros'), "resources", "pepper", "pepper_right_arm.json"))
 
 		self.offset = np.array([0.0,0.0,0])
 		self.nuitrack = NuitrackROS(height=480, width=848, horizontal=False)
@@ -127,7 +127,7 @@ if __name__=='__main__':
 		rate.sleep()
 		if hand_pose is not None:
 			if prev_z is not None:
-				if count >100 and hand_pose[2] < 0.9 and hand_pose[2] - prev_z < -0.005:
+				if count >100 and hand_pose[2] < 0.63 and hand_pose[2] - prev_z < -0.005:
 					controller.joint_trajectory.points[0].positions = default_arm_joints
 					controller.publish(stamp)
 					rate.sleep()

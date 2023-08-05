@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>segmint-ik</name>
+  <name>mild_hri_ros</name>
   <version>0.0.0</version>
-  <description>SegmInt-IK: Segmenting Interactions for Inverse Kinematic Adaptation of Physically Interactive Gestures</description>
+  <description>ROS Package to run the MILD-HRI models on the Pepper Robot</description>
 
   <maintainer email="vignesh.prasad@tu-darmstadt.de">Vignesh Prasad</maintainer>
   <license>Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</license>
 
-  <url type="website">https://sites.google.com/view/segmint-ik</url>
+  <url type="website">https://sites.google.com/view/mild-hri</url>
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>image_transport</depend>

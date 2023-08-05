@@ -2,11 +2,12 @@
 
 	<arg name="robot_ip"          default="192.168.100.77"/>
 	<arg name="network_interface" default="enxa0cec8c1a425" />
+	<node name="dynparam_load" type="dynparam" pkg="dynamic_reconfigure" args="load /tf_dynreconf_node $(find mild_hri_ros)/config/nuitrack_pepper_tf.yaml"/>
 
-	<include file="$(find segmint-ik)/launch/pepper_bringup.launch">
+	<!-- <include file="$(find mild_hri_ros)/launch/pepper_bringup.launch">
 		<arg name="robot_ip" value="$(arg robot_ip)"/>
 		<arg name="network_interface" value="$(arg network_interface)"/>
-	</include>
+	</include> -->
 	<!-- <include file="$(find pepper_moveit_config)/launch/demo.launch" >
 		<arg name="use_rviz" value="false"/>
 	</include> -->
@@ -20,10 +21,9 @@
     </node>
 
 	<node name="tf_dynreconf_node" type="node" pkg="tf_dynreconf" />
-	<node name="dynparam_load" type="dynparam" pkg="dynamic_reconfigure" args="load /tf_dynreconf_node $(find segmint-ik)/config/nuitrack_pepper_tf.yaml"/>
-	<node name="check_selfcollision" pkg="check_selfcollision" type="service_node" respawn="true" output="screen"/>
+	<!-- <node name="check_selfcollision" pkg="check_selfcollision" type="service_node" respawn="true" output="screen"/> -->
 
-	<node name="rviz" type="rviz" pkg="rviz" args="-d $(env HOME)/.rviz/hri23.rviz"/>
+	<!-- <node name="rviz" type="rviz" pkg="rviz" args="-d $(env HOME)/.rviz/hri23.rviz"/> -->
 
 	<!-- <node name="image_view" type="image_view" pkg="image_view">
 		<remap from="image" to="image_display"/>
