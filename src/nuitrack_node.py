@@ -17,14 +17,10 @@ import rospy
 from utils import *
 
 class NuitrackWrapper:
-	def __init__(self, origin_xyz, origin_rpy, height=480, width=848, horizontal=True):
+	def __init__(self, height=480, width=848, horizontal=False):
 		self._height = height
 		self._width = width
 		self._horizontal = horizontal
-		
-		#Left Realsense
-		self.base2cam = euler_matrix(*origin_rpy)
-		self.base2cam[:3, 3] = np.array(origin_xyz)
 
 		self.init_nuitrack()
 		print("Nuitrack Version:", self.nuitrack.get_version())
@@ -44,14 +40,14 @@ class NuitrackWrapper:
 		self.nuitrack.set_config_value("Realsense2Module.Depth.RawHeight", str(self._height))
 		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessHeight", str(self._height))
-		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "30")
+		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "15")
 
 		# Realsense RGB Module - force to 848x480 @ 30 FPS
 		self.nuitrack.set_config_value("Realsense2Module.RGB.RawWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.RawHeight", str(self._height))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessHeight", str(self._height))
-		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "30")
+		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "15")
 
 		devices = self.nuitrack.get_device_list()
 		for i, dev in enumerate(devices):
@@ -108,7 +104,9 @@ class NuitrackROS(NuitrackWrapper):
 		# Ideally use a tf listener, but this is easier
 		xyz = [rospy.get_param("/tf_dynreconf_node/x"), rospy.get_param("/tf_dynreconf_node/y"), rospy.get_param("/tf_dynreconf_node/z")]
 		rpy = [rospy.get_param("/tf_dynreconf_node/roll"), rospy.get_param("/tf_dynreconf_node/pitch"), rospy.get_param("/tf_dynreconf_node/yaw")]
-		super().__init__(xyz, rpy, height, width, horizontal)
+		self.base2cam = euler_matrix(*rpy)
+		self.base2cam[:3, 3] = np.array(xyz)
+		super().__init__(height, width, horizontal)
 		
 		intrinsics = intrinsics_horizontal if horizontal else intrinsics_vertical
 		K = intrinsics[(self._width, self._height)]

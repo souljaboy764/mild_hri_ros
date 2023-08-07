@@ -18,9 +18,9 @@ def rotation_normalization(skeleton):
 	rightShoulder = skeleton[joints_idx["right_shoulder"]-1]
 	waist = skeleton[joints_idx["waist"]-1]
 	
-	yAxisHelper = waist - rightShoulder
-	xAxis = leftShoulder - rightShoulder # right to left
-	yAxis = cross(xAxis, yAxisHelper) # out of the human(like an arrow in the back)
+	xAxisHelper = waist - rightShoulder
+	yAxis = leftShoulder - rightShoulder # right to left
+	xAxis = cross(xAxisHelper, yAxis) # out of the human (to the front)
 	zAxis = cross(xAxis, yAxis) # like spine, but straight
 	
 	xAxis /= np.linalg.norm(xAxis)
@@ -31,6 +31,17 @@ def rotation_normalization(skeleton):
 					 [yAxis[0], yAxis[1], yAxis[2]],
 					 [zAxis[0], zAxis[1], zAxis[2]]])
 
+def skeleton_transformation(nui_skeleton):
+	# Origin at right shoulder, like in the training data
+	rotation_normalization_matrix = np.eye(4)
+	rotation_normalization_matrix[:3, 3] = nui_skeleton[joints_idx["right_collar"]-1:joints_idx["right_collar"], :]
+	nui_skeleton -= nui_skeleton[joints_idx["right_collar"]-1:joints_idx["right_collar"], :]
+	rotation_normalization_matrix[:3, :3] = rotation_normalization(nui_skeleton)
+	nui_skeleton = rotation_normalization_matrix[:3,:3].dot(nui_skeleton.T).T
+	# nui_skeleton[:, 0] *= -1
+	# nui_skeleton[:, 1] *= -1
+
+	return nui_skeleton, rotation_normalization_matrix
 
 def mat2ROS(T:np.ndarray)->tuple:
 	if T.shape == (4,4):
