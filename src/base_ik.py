@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import numpy as np
 import os
 from ikpy.chain import Chain
@@ -99,7 +101,7 @@ class BaseIKController:
 		frame_target[:3, 3] = target_pose
 		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result, optimizer = "scalar", **kwargs)
 		rarm_joints = self.ik_result[2:6].tolist()
-		self.joint_trajectory.points[0].positions = 0.5*np.array(self.joint_trajectory.points[0].positions) + 0.5*np.array(rarm_joints + [1.8239, 0.75])
+		self.joint_trajectory.points[0].positions = 0.5*np.array(self.joint_trajectory.points[0].positions) + 0.5*np.array(rarm_joints + [1.8239, 0])
 	
 if __name__=='__main__':
 	rospy.init_node('hri_ik_node')
@@ -107,29 +109,39 @@ if __name__=='__main__':
 	controller = BaseIKController()
 	controller.observe_human()
 	count = 0
+	hand_pos_init = []
 	prev_z = None
 	stop_counter = 0
 	rate.sleep()
 	controller.joint_trajectory.points[0].effort[0] = 0.7
+	started = False
 	while not rospy.is_shutdown():
 		nui_skeleton, hand_pose, stamp = controller.observe_human()
 		if len(nui_skeleton)!=0:
 			count += 1
 		if count < 20:
+			if hand_pose is not None:
+				hand_pos_init.append(hand_pose)
 			controller.publish(stamp)
 			rate.sleep()
 			continue
-		elif count >80 and controller.joint_readings[0] < 0.4:
-			controller.joint_trajectory.points[0].effort[0] = 0.1
-		print(controller.joint_trajectory.points[0].effort[0], controller.joint_readings[0])
+		elif count == 20:
+			hand_pos_init = np.mean(hand_pos_init, 0)
+			print('Calibration ready')
+		if not started and ((hand_pose - hand_pos_init)**2).sum() < 0.0004:
+			print('Not yet started. Current displacement:', ((hand_pose - hand_pos_init)**2).sum())
+			continue
+		else:
+			started = True
+		# if started and controller.joint_readings[0] < 0.8:
+		# 	controller.joint_trajectory.points[0].effort[0] = 0.1
+		# print(controller.joint_trajectory.points[0].effort[0], controller.joint_readings[0])
 		controller.step(nui_skeleton, hand_pose)
 		controller.publish(stamp)
 		rate.sleep()
-		if hand_pose is not None:
-			if prev_z is not None:
-				if count >100 and hand_pose[2] < 0.63 and hand_pose[2] - prev_z < -0.005:
-					controller.joint_trajectory.points[0].positions = default_arm_joints
-					controller.publish(stamp)
-					rate.sleep()
-					rospy.signal_shutdown('done')
-			prev_z = hand_pose[2]
+		if started and count>100 and ((hand_pose - hand_pos_init)**2).sum() < 0.001: # hand_pose[2] < 0.63 and hand_pose[2] - prev_z < -0.005:
+			controller.joint_trajectory.points[0].effort[0] = 0.5
+			controller.joint_trajectory.points[0].positions = default_arm_joints
+			controller.publish(stamp)
+			rate.sleep()
+			rospy.signal_shutdown('done')
