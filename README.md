@@ -28,7 +28,6 @@ ROS Package to run the [MILD-HRI](https://sites.google.com/view/mild-hri) models
 
     ```bash
     export LD_LIBRARY_PATH=/usr/local/lib/nuitrack
-    source /path/to/pepper_ws/devel/setup.bash
     source /path/to/current_ws/devel/setup.bash
     ```
 

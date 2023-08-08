@@ -40,14 +40,14 @@ class NuitrackWrapper:
 		self.nuitrack.set_config_value("Realsense2Module.Depth.RawHeight", str(self._height))
 		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessHeight", str(self._height))
-		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "15")
+		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "60")
 
 		# Realsense RGB Module - force to 848x480 @ 30 FPS
 		self.nuitrack.set_config_value("Realsense2Module.RGB.RawWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.RawHeight", str(self._height))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessHeight", str(self._height))
-		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "15")
+		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "60")
 
 		devices = self.nuitrack.get_device_list()
 		for i, dev in enumerate(devices):
@@ -100,10 +100,10 @@ class NuitrackWrapper:
 		self.nuitrack.release()
 
 class NuitrackROS(NuitrackWrapper):
-	def __init__(self, height=480, width=848, camera_link='camera_color_optical_frame', horizontal=False):
+	def __init__(self, height=480, width=848, camera_link='camera_link', horizontal=False):
 		# Ideally use a tf listener, but this is easier
-		xyz = [rospy.get_param("/tf_dynreconf_node/x"), rospy.get_param("/tf_dynreconf_node/y"), rospy.get_param("/tf_dynreconf_node/z")]
-		rpy = [rospy.get_param("/tf_dynreconf_node/roll"), rospy.get_param("/tf_dynreconf_node/pitch"), rospy.get_param("/tf_dynreconf_node/yaw")]
+		xyz = [rospy.get_param("/tf_dynreconf_node/x", 0), rospy.get_param("/tf_dynreconf_node/y", 0), rospy.get_param("/tf_dynreconf_node/z", 0)]
+		rpy = [rospy.get_param("/tf_dynreconf_node/roll", 0), rospy.get_param("/tf_dynreconf_node/pitch", 0), rospy.get_param("/tf_dynreconf_node/yaw", 0)]
 		self.base2cam = euler_matrix(*rpy)
 		self.base2cam[:3, 3] = np.array(xyz)
 		super().__init__(height, width, horizontal)
