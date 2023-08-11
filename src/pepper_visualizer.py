@@ -1,8 +1,11 @@
-import dataloaders
-from vae import VAE
+from mild_hri.dataloaders. buetepage import *
+from mild_hri.utils import *
+from mild_hri.vae import VAE
 
 import torch
 import numpy as np
+
+import argparse
 
 import os
 
@@ -10,32 +13,44 @@ import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Quaternion, Point
 from moveit_msgs.msg import DisplayTrajectory, RobotTrajectory
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+parser = argparse.ArgumentParser(description='Pepper Teleop Tester')
+# Results and Paths
+parser.add_argument('--src', type=str, default='./data/buetepage/traj_data.npz', metavar='SRC',
+					help='Path to read training and testing data (default: ./data/buetepage/traj_data.npz).')
+parser.add_argument('--ckpt', type=str, required=True, metavar='CKPT',
+					help='Checkpoint to load models from (required)')
+args = parser.parse_args()
+
 rospy.init_node('visualizer_node')
-window_size = 5
-num_joints = 3
-joint_dims = 3
-downsample = 0.2
-src = 'data/buetepage/traj_data.npz'
-dataset = dataloaders.buetepage.PepperWindowDataset(src, train=False, window_length=window_size, downsample=downsample)
-robot_pub = rospy.Publisher('move_group/display_planned_path', DisplayTrajectory, queue_size=10)
-robot_pub_ae = rospy.Publisher('move_group/display_autoencoded_path', DisplayTrajectory, queue_size=10)
-robot_pub_gt = rospy.Publisher('move_group/display_groundtruth_path', DisplayTrajectory, queue_size=10)
-human_pub = rospy.Publisher('visualization_marker_array', MarkerArray, queue_size=10)
+
+ckpt = torch.load(args.ckpt)
+args_h = ckpt['args_h']
+args_r = ckpt['args_r']
+
+z_dim = args_h.latent_dim
+
+model_h = VAE(**(args_h.__dict__)).to(device)
+model_h.load_state_dict(ckpt['model_h'])
+model_r = VAE(**{**(args_h.__dict__), **(args_r.__dict__)}).to(device)
+model_r.load_state_dict(ckpt['model_r'])
+model_r.eval()
+ssm = ckpt['ssm']
+dataset = PepperWindowDataset(args.src, train=False, window_length=args_r.window_size, downsample=args_r.downsample)
 
 markerarray_msg = MarkerArray()
 lines = []
-for w in range(window_size):
-	for i in range(num_joints):
+for w in range(args_r.window_size):
+	for i in range(args_r.num_joints):
 		marker = Marker()
 		line_strip = Marker()
 		line_strip.ns = marker.ns = "nuitrack_skeleton"
 		marker.header.frame_id = line_strip.header.frame_id = 'base_link'
-		marker.id = i + w * num_joints
-		line_strip.id = i + (window_size + w) * num_joints
+		marker.id = i + w * args_r.num_joints
+		line_strip.id = i + (args_r.window_size + w) * args_r.num_joints
 		line_strip.lifetime = marker.lifetime = rospy.Duration(0.5)
 		line_strip.frame_locked = marker.frame_locked = False
 		line_strip.action = marker.action = Marker.ADD
@@ -45,7 +60,7 @@ for w in range(window_size):
 
 		line_strip.color.r = marker.color.g = 1
 		line_strip.color.g = line_strip.color.b = marker.color.b = marker.color.r = 0
-		line_strip.color.a = marker.color.a = 1/(window_size - w)
+		line_strip.color.a = marker.color.a = 1/(args_r.window_size - w)
 
 		marker.scale.x = marker.scale.y = marker.scale.z = 0.075
 		line_strip.scale.x = 0.04
@@ -68,7 +83,7 @@ traj = RobotTrajectory()
 traj.joint_trajectory.header.frame_id = 'base_link'
 traj.joint_trajectory.joint_names = trajectory_msg.trajectory_start.joint_state.name
 traj.joint_trajectory.points = []
-for i in range(window_size-1):
+for i in range(args_r.window_size-1):
 	point  = JointTrajectoryPoint()
 	point.time_from_start = rospy.Duration(0.05)
 	traj.joint_trajectory.points.append(point)
@@ -83,7 +98,7 @@ traj = RobotTrajectory()
 traj.joint_trajectory.header.frame_id = 'base_link'
 traj.joint_trajectory.joint_names = trajectory_msg.trajectory_start.joint_state.name
 traj.joint_trajectory.points = []
-for i in range(window_size-1):
+for i in range(args_r.window_size-1):
 	point  = JointTrajectoryPoint()
 	point.time_from_start = rospy.Duration(0.05)
 	traj.joint_trajectory.points.append(point)
@@ -98,59 +113,51 @@ traj = RobotTrajectory()
 traj.joint_trajectory.header.frame_id = 'base_link'
 traj.joint_trajectory.joint_names = trajectory_msg.trajectory_start.joint_state.name
 traj.joint_trajectory.points = []
-for i in range(window_size-1):
+for i in range(args_r.window_size-1):
 	point  = JointTrajectoryPoint()
 	point.time_from_start = rospy.Duration(0.05)
 	traj.joint_trajectory.points.append(point)
 trajectory_msg_ae.trajectory.append(traj)
 
-
-ckpt = torch.load(ckpt_path)
-args_ckpt = ckpt['args']
-z_dim = args_ckpt.latent_dim
-
-model_h = VAE(**(ae_config.__dict__)).to(device)
-model_h.load_state_dict(ckpt['model_h'])
-model_h.eval()
-model_r = VAE(**(robot_vae_config.__dict__)).to(device)
-model_r.load_state_dict(ckpt['model_r'])
-model_r.eval()
-hsmm = ckpt['hsmm']
-
 rate = rospy.Rate(20)
+robot_pub = rospy.Publisher('move_group/display_planned_path', DisplayTrajectory, queue_size=10)
+robot_pub_ae = rospy.Publisher('move_group/display_autoencoded_path', DisplayTrajectory, queue_size=10)
+robot_pub_gt = rospy.Publisher('move_group/display_groundtruth_path', DisplayTrajectory, queue_size=10)
+human_pub = rospy.Publisher('visualization_marker_array', MarkerArray, queue_size=10)
+
 actidx = np.hstack(dataset.actidx - np.array([0,1]))
 for a in actidx:
 	x, label = dataset[a]
 	seq_len = x.shape[0]
-	dims_h = window_size*num_joints*joint_dims
-	x_h = x[:, :dims_h].reshape((seq_len, window_size, num_joints, joint_dims))
-	x_r = x[:, dims_h:].reshape((seq_len, window_size, 4))
+	dims_h = args_h.window_size*args_h.num_joints*args_h.joint_dims
+	x_h = x[:, :dims_h].reshape((seq_len, args_h.window_size, args_h.num_joints, args_h.joint_dims))
+	x_r = x[:, dims_h:].reshape((seq_len, args_r.window_size, 4))
 	fwd_h = None
 	with torch.no_grad():
 		xr_rec, _, _ = model_r(torch.Tensor(x[:, dims_h:]).to(device))
-		xr_rec = xr_rec.cpu().detach().numpy().reshape(-1, window_size, 4)
+		xr_rec = xr_rec.cpu().detach().numpy().reshape(-1, args_r.window_size, 4)
 
-		if args_ckpt.cov_cond:
+		if args_h.cov_cond:
 			zh_post = model_h(torch.Tensor(x[:, :dims_h]).to(device), dist_only=True)
-			fwd_h = hsmm[label].forward_variable(demo=zh_post.mean, marginal=slice(0, z_dim))#, alpha_0=fwd_h), alpha_0=fwd_h)[:, -1]
-			zr_cond = hsmm[label].condition(zh_post.mean, dim_in=slice(0, z_dim), dim_out=slice(z_dim, 2*z_dim), h=fwd_h, 
+			fwd_h = ssm[label].forward_variable(demo=zh_post.mean, marginal=slice(0, z_dim))#, alpha_0=fwd_h), alpha_0=fwd_h)[:, -1]
+			zr_cond = ssm[label].condition(zh_post.mean, dim_in=slice(0, z_dim), dim_out=slice(z_dim, 2*z_dim), h=fwd_h, 
 												return_cov=False, data_Sigma_in=zh_post.covariance_matrix)
 		else:
 			zh_post = model_h(torch.Tensor(x[:, :dims_h]).to(device), encode_only=True)
-			fwd_h = hsmm[label].forward_variable(demo=zh_post, marginal=slice(0, z_dim))#, alpha_0=fwd_h)
-			zr_cond = hsmm[label].condition(zh_post, dim_in=slice(0, z_dim), dim_out=slice(z_dim, 2*z_dim), h=fwd_h, 
+			fwd_h = ssm[label].forward_variable(demo=zh_post, marginal=slice(0, z_dim))#, alpha_0=fwd_h)
+			zr_cond = ssm[label].condition(zh_post, dim_in=slice(0, z_dim), dim_out=slice(z_dim, 2*z_dim), h=fwd_h, 
 												return_cov=False, data_Sigma_in=None)
-		xr_cond = model_r._output(model_r._decoder(zr_cond)).cpu().detach().numpy().reshape(-1, window_size, 4)
+		xr_cond = model_r._output(model_r._decoder(zr_cond)).cpu().detach().numpy().reshape(-1, args_r.window_size, 4)
 	for i in range(seq_len):
 		stamp = rospy.Time.now()
-		for w in range(window_size):
-			for j in range(num_joints):
-				markerarray_msg.markers[j + w * num_joints].pose.position.x = 0.7 - x_h[i][w][j][0]
-				markerarray_msg.markers[j + w * num_joints].pose.position.y = -0.1 - x_h[i][w][j][1]
-				markerarray_msg.markers[j + w * num_joints].pose.position.z = x_h[i][w][j][2]
+		for w in range(args_r.window_size):
+			for j in range(args_r.num_joints):
+				markerarray_msg.markers[j + w * args_r.num_joints].pose.position.x = 0.7 - x_h[i][w][j][0]
+				markerarray_msg.markers[j + w * args_r.num_joints].pose.position.y = -0.1 - x_h[i][w][j][1]
+				markerarray_msg.markers[j + w * args_r.num_joints].pose.position.z = x_h[i][w][j][2]
 
 				if j!=0:
-					line_idx = window_size*num_joints + j + w * (num_joints-1) -1
+					line_idx = args_r.window_size*args_r.num_joints + j + w * (args_r.num_joints-1) -1
 					markerarray_msg.markers[line_idx].points[0].x = 0.7 - x_h[i][w][j-1][0]
 					markerarray_msg.markers[line_idx].points[0].y = -0.1 - x_h[i][w][j-1][1]
 					markerarray_msg.markers[line_idx].points[0].z = x_h[i][w][j-1][2]
