@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/vignesh/catkin_ws/devel/include/**",
+        "/home/vignesh/pepper_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/vignesh/catkin_ws/src/moveit_selfcollision_checker/include/**",
+        "/home/vignesh/catkin_ws/src/eigen_checks/include/**",
+        "/home/vignesh/pepper_ws/src/extrinsic_calibration/include/**",
+        "/home/vignesh/pepper_ws/src/naoqi_dcm_driver/include/**",
+        "/home/vignesh/catkin_ws/src/pepper_controller_server/include/**",
+        "/home/vignesh/catkin_ws/src/rbdl/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

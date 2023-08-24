@@ -20,8 +20,8 @@ class MILDHHIController:
 		self.ssm = ckpt['ssm'][2]
 		self.mu = self.ssm.mu.cpu().numpy()
 		self.sigma = self.ssm.sigma.cpu().numpy()
-		self.vae = mild_hri.vae.VAE(**(ckpt['args'].__dict__)).to(device)
-		self.vae.load_state_dict(ckpt['model'])
+		self.vae = mild_hri.vae.VAE(**(ckpt['args_h'].__dict__)).to(device)
+		self.vae.load_state_dict(ckpt['model_h'])
 		self.vae.eval()
 
 		self.nuitrack = NuitrackWrapper()

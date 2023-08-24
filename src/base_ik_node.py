@@ -104,7 +104,7 @@ class BaseIKController:
 		self.joint_trajectory.points[0].positions = 0.5*np.array(self.joint_trajectory.points[0].positions) + 0.5*np.array(rarm_joints + [1.8239, 0])
 	
 if __name__=='__main__':
-	rospy.init_node('hri_ik_node')
+	rospy.init_node('base_ik_node')
 	rate = rospy.Rate(100)
 	controller = BaseIKController()
 	controller.observe_human()
