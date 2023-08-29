@@ -1,4 +1,4 @@
-from mild_hri.dataloaders. buetepage import *
+from mild_hri.dataloaders.nuisi import *
 from mild_hri.utils import *
 from mild_hri.vae import VAE
 
@@ -43,14 +43,14 @@ dataset = PepperWindowDataset(args.src, train=False, window_length=args_r.window
 
 markerarray_msg = MarkerArray()
 lines = []
-for w in range(args_r.window_size):
-	for i in range(args_r.num_joints):
+for w in range(args_h.window_size):
+	for i in range(args_h.num_joints//2):
 		marker = Marker()
 		line_strip = Marker()
 		line_strip.ns = marker.ns = "nuitrack_skeleton"
 		marker.header.frame_id = line_strip.header.frame_id = 'base_link'
-		marker.id = i + w * args_r.num_joints
-		line_strip.id = i + (args_r.window_size + w) * args_r.num_joints
+		marker.id = i + w * args_h.num_joints//2
+		line_strip.id = i + (args_r.window_size + w) * args_h.num_joints//2
 		line_strip.lifetime = marker.lifetime = rospy.Duration(0.5)
 		line_strip.frame_locked = marker.frame_locked = False
 		line_strip.action = marker.action = Marker.ADD
@@ -128,8 +128,9 @@ human_pub = rospy.Publisher('visualization_marker_array', MarkerArray, queue_siz
 actidx = np.hstack(dataset.actidx - np.array([0,1]))
 for a in actidx:
 	x, label = dataset[a]
+	print(x.shape)
 	seq_len = x.shape[0]
-	dims_h = args_h.window_size*args_h.num_joints*args_h.joint_dims
+	dims_h = model_h.input_dim
 	x_h = x[:, :dims_h].reshape((seq_len, args_h.window_size, args_h.num_joints, args_h.joint_dims))
 	x_r = x[:, dims_h:].reshape((seq_len, args_r.window_size, 4))
 	fwd_h = None
@@ -151,13 +152,13 @@ for a in actidx:
 	for i in range(seq_len):
 		stamp = rospy.Time.now()
 		for w in range(args_r.window_size):
-			for j in range(args_r.num_joints):
-				markerarray_msg.markers[j + w * args_r.num_joints].pose.position.x = 0.7 - x_h[i][w][j][0]
-				markerarray_msg.markers[j + w * args_r.num_joints].pose.position.y = -0.1 - x_h[i][w][j][1]
-				markerarray_msg.markers[j + w * args_r.num_joints].pose.position.z = x_h[i][w][j][2]
+			for j in range(args_h.num_joints//2):
+				markerarray_msg.markers[j + w * args_h.num_joints//2].pose.position.x = 0.7 - x_h[i][w][j][0]
+				markerarray_msg.markers[j + w * args_h.num_joints//2].pose.position.y = -0.1 - x_h[i][w][j][1]
+				markerarray_msg.markers[j + w * args_h.num_joints//2].pose.position.z = x_h[i][w][j][2]
 
 				if j!=0:
-					line_idx = args_r.window_size*args_r.num_joints + j + w * (args_r.num_joints-1) -1
+					line_idx = args_r.window_size*args_h.num_joints//2 + j + w * (args_h.num_joints//2-1) -1
 					markerarray_msg.markers[line_idx].points[0].x = 0.7 - x_h[i][w][j-1][0]
 					markerarray_msg.markers[line_idx].points[0].y = -0.1 - x_h[i][w][j-1][1]
 					markerarray_msg.markers[line_idx].points[0].z = x_h[i][w][j-1][2]

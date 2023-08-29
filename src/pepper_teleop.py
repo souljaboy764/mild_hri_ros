@@ -1,4 +1,4 @@
-from mild_hri.dataloaders. buetepage import *
+from mild_hri.dataloaders.nuisi import *
 from mild_hri.utils import *
 
 import numpy as np
@@ -18,9 +18,9 @@ parser.add_argument('--src', type=str, default='./data/buetepage/traj_data.npz',
 args = parser.parse_args()
 
 rospy.init_node('pepper_teleop_visualizer_node')
-downsample = 0.2
+downsample = 1.0
 window_size = 5
-num_joints = 4
+num_joints = 3
 joint_dims = 3
 pepper_dataset = PepperWindowDataset(args.src, train=True, window_length=window_size, downsample=downsample)
 human_dataset = HHWindowDataset(args.src, train=True, window_length=window_size, downsample=downsample)

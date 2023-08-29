@@ -9,13 +9,16 @@
   <arg name="password"          default="no_password" />
 
  	<!-- Call Robot publisher -->
-  <include file="$(find pepper_description)/launch/pepper_upload.launch" />
+  <!-- <include file="$(find pepper_description)/launch/pepper_upload.launch" /> -->
+  <include file="$(find pepper_moveit_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="true"/>
+  </include>
 
   <!-- Call Robot Trajectory Controller -->
   <include file="$(find pepper_controller_server)/launch/pepper_controller_server.launch"/>
 
   <!-- Only needed for external calibration with apriltag_ros -->
-  <!-- <node pkg="nodelet" type="nodelet" args="manager" name="pepper_nodelet" output="screen"/>
+  <node pkg="nodelet" type="nodelet" args="manager" name="pepper_nodelet" output="screen"/>
 	<node pkg="nodelet" type="nodelet" name="image_proc_debayer" args="load image_proc/debayer pepper_nodelet">
 			<remap from="image_raw" to="/naoqi_driver/camera/front/image_raw"/>
 			<remap from="image_mono" to="/naoqi_driver/camera/front/image_mono"/>
@@ -26,7 +29,7 @@
 			<remap from="image_mono" to="/naoqi_driver/camera/front/image_mono"/>
 			<remap from="camera_info" to="/naoqi_driver/camera/front/camera_info"/>
 			<remap from="image_rect" to="/naoqi_driver/camera/front/image_rect"/>
-  </node> -->
+  </node>
 
 
   <node pkg="naoqi_driver" type="naoqi_driver_node" name="$(arg namespace)" required="true" args="--qi-url=tcp://$(arg robot_ip):$(arg robot_port) --nao_ip=$(arg robot_ip) --nao_port=$(arg robot_port) --user=$(arg user) --password=$(arg password) --roscore_ip=$(arg roscore_ip) --network_interface=$(arg network_interface) --namespace=$(arg namespace)" output="screen" />

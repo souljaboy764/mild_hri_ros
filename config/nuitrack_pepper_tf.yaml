@@ -9,23 +9,23 @@ dictitems:
       parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
         state: []
       parent: 0
-      pitch: 0.009023
-      roll: -1.6425277
+      pitch: -0.00729603
+      roll: -1.66080875
       source_frame: base_footprint
       state: true
       target_frame: camera_link
       type: ''
-      x: -0.3
-      y: 0.42235115
-      yaw: -2.06857625
-      z: 0.78092424
+      x: -0.27
+      y: 0.5668647
+      yaw: -2.06917226
+      z: 0.9143395
     state: []
-  pitch: 0.009023
-  roll: -1.6425277
+  pitch: -0.00729603
+  roll: -1.66080875
   source_frame: base_footprint
   target_frame: camera_link
-  x: -0.3
-  y: 0.42235115
-  yaw: -2.06857625
-  z: 0.78092424
+  x: -0.27
+  y: 0.5668647
+  yaw: -2.06917226
+  z: 0.9143395
 state: []
