@@ -40,14 +40,14 @@ class NuitrackWrapper:
 		self.nuitrack.set_config_value("Realsense2Module.Depth.RawHeight", str(self._height))
 		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.Depth.ProcessHeight", str(self._height))
-		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "15")
+		self.nuitrack.set_config_value("Realsense2Module.Depth.FPS", "30")
 
 		# Realsense RGB Module - force to 848x480 @ 30 FPS
 		self.nuitrack.set_config_value("Realsense2Module.RGB.RawWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.RawHeight", str(self._height))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessWidth", str(self._width))
 		self.nuitrack.set_config_value("Realsense2Module.RGB.ProcessHeight", str(self._height))
-		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "15")
+		self.nuitrack.set_config_value("Realsense2Module.RGB.FPS", "30")
 
 		devices = self.nuitrack.get_device_list()
 		for i, dev in enumerate(devices):
