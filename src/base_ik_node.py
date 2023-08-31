@@ -28,6 +28,7 @@ class BaseIKController:
 		self.broadcaster = tf2_ros.StaticTransformBroadcaster()
 		self.tfBuffer = tf2_ros.Buffer()
 		self.listener = tf2_ros.TransformListener(self.tfBuffer)
+		self.robot_hand_joint = 0.
 
 		self.target_tf = TransformStamped()
 		self.target_tf.header.frame_id = 'base_footprint'
@@ -36,8 +37,13 @@ class BaseIKController:
 
 		self.hand_tf = TransformStamped()
 		self.hand_tf.header.frame_id = 'base_footprint'
-		self.hand_tf.child_frame_id = 'hand'
+		self.hand_tf.child_frame_id = 'human_hand'
 		self.hand_tf.transform.rotation.w = 1.
+
+		self.endeff_tf = TransformStamped()
+		self.endeff_tf.header.frame_id = 'base_link'
+		self.endeff_tf.child_frame_id = 'endeff'
+		self.endeff_tf.transform.rotation.w = 1.
 
 		self.state_msg = DisplayRobotState()
 		self.state_msg.state.joint_state.header.frame_id = "base_footprint"
@@ -48,7 +54,7 @@ class BaseIKController:
 		self.joint_trajectory.joint_names = self.joint_names
 		self.joint_trajectory.points.append(JointTrajectoryPoint())
 		self.joint_trajectory.points[0].effort = np.ones(len(self.joint_names)).tolist()
-		self.joint_trajectory.points[0].effort[0] = 0.5
+		self.joint_trajectory.points[0].effort[0] = 1.0
 		self.joint_trajectory.points[0].positions = default_arm_joints
 		self.joint_trajectory.header.stamp = rospy.Time.now()
 
@@ -56,14 +62,17 @@ class BaseIKController:
 
 		self.offset = np.array([0.0,0.0,0])
 		self.nuitrack = NuitrackROS(height=480, width=848, horizontal=False)
-		self.ik_result = np.array([0.0, 1.5708, -0.109, 0.7854, 0.009, 1.8239, 0.0 , 0.0, 0.0])
+		self.ik_result = np.array([0.0, 0.0, 1.5708, -0.109, 0.7854, 0.009, 1.8239, 0.0 , 0.0])
 
 		self.joint_state_sub = rospy.Subscriber('/joint_states', JointState, self.joint_state_cb)
 
 	def joint_state_cb(self, msg:JointState):
 		if len(msg.name)<=6:
 			return
-		self.joint_readings = msg.position[11:17]
+		self.joint_readings = np.array(msg.position[11:17])
+		self.endeff = self.pepper_chain.forward_kinematics(self.pepper_chain.active_to_full(self.joint_readings[:4], [0] * len(self.pepper_chain.links)))
+		self.endeff_tf.transform = mat2TF(self.endeff)
+
 		self.state_msg.state.joint_state = msg
 		self.state_msg.state.joint_state.header.frame_id = "base_footprint"
 		self.state_msg.state.joint_state.position = list(self.state_msg.state.joint_state.position)
@@ -74,16 +83,16 @@ class BaseIKController:
 		if img is None or len(nui_skeleton)==0:
 			return [], None, stamp
 		
-		hand_pose = self.nuitrack.base2cam[:3,:3].dot(nui_skeleton[-2, :]) + self.nuitrack.base2cam[:3,3]
+		hand_pose = self.nuitrack.base2cam[:3,:3].dot(nui_skeleton[-1, :]) + self.nuitrack.base2cam[:3,3]
 
 		self.hand_tf.transform = mat2TF(hand_pose)
 		
 		return nui_skeleton, hand_pose, stamp
 	
 	def publish(self, stamp):
-		self.state_msg.state.joint_state.header.stamp = self.target_tf.header.stamp = self.hand_tf.header.stamp = self.joint_trajectory.header.stamp = stamp
+		self.state_msg.state.joint_state.header.stamp = self.target_tf.header.stamp = self.endeff_tf.header.stamp = self.hand_tf.header.stamp = self.joint_trajectory.header.stamp = stamp
 		self.send_target(self.joint_trajectory)
-		self.broadcaster.sendTransform([self.target_tf, self.hand_tf])
+		self.broadcaster.sendTransform([self.target_tf, self.hand_tf, self.endeff_tf])
 		self.state_pub.publish(self.state_msg)
 
 	def in_baselink(self, hand_pose):
@@ -100,9 +109,9 @@ class BaseIKController:
 		target_pose = self.in_baselink(hand_pose)
 		frame_target = np.eye(4)
 		frame_target[:3, 3] = target_pose
-		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result, optimizer = "scalar", **kwargs)
+		self.ik_result = self.pepper_chain.inverse_kinematics_frame(frame_target, initial_position=self.ik_result, **kwargs)
 		rarm_joints = self.ik_result[2:6].tolist()
-		self.joint_trajectory.points[0].positions = 0.2*np.array(self.joint_trajectory.points[0].positions) + 0.8*np.array(rarm_joints + [1., 0.])
+		self.joint_trajectory.points[0].positions = 0.2*np.array(self.joint_trajectory.points[0].positions) + 0.8*np.array(rarm_joints + [1., self.robot_hand_joint])
 	
 if __name__=='__main__':
 	rospy.init_node('base_ik_node')
@@ -113,8 +122,8 @@ if __name__=='__main__':
 	hand_pos_init = []
 	prev_z = None
 	stop_counter = 0
-	rate.sleep()
-	controller.joint_trajectory.points[0].effort[0] = 0.7
+	rospy.Rate(0.5).sleep()
+	controller.joint_trajectory.points[0].effort[0] = 1.0
 	started = False
 	while not rospy.is_shutdown():
 		nui_skeleton, hand_pose, stamp = controller.observe_human()
@@ -129,20 +138,24 @@ if __name__=='__main__':
 		elif count == 20:
 			hand_pos_init = np.mean(hand_pos_init, 0)
 			print('Calibration ready')
-		if not started and ((hand_pose - hand_pos_init)**2).sum() < 0.0004:
+		if not started and ((hand_pose - hand_pos_init)**2).sum() < 0.001:
 			print('Not yet started. Current displacement:', ((hand_pose - hand_pos_init)**2).sum())
 			continue
 		else:
 			started = True
-		# if started and controller.joint_readings[0] < 0.8:
-		# 	controller.joint_trajectory.points[0].effort[0] = 0.1
+		# if started and controller.joint_readings[0] < 0.2:
+		# 	if controller.joint_trajectory.points[0].effort[0] > 0.2:
+		# 		controller.joint_trajectory.points[0].effort[0] -= 0.1
 		# print(controller.joint_trajectory.points[0].effort[0], controller.joint_readings[0])
-		controller.step(nui_skeleton, hand_pose)
+		controller.step(nui_skeleton, hand_pose, optimizer = "least_squares")
 		controller.publish(stamp)
 		rate.sleep()
 		if started and count>100 and ((hand_pose - hand_pos_init)**2).sum() < 0.005: # hand_pose[2] < 0.63 and hand_pose[2] - prev_z < -0.005:
-			controller.joint_trajectory.points[0].effort[0] = 0.5
-			controller.joint_trajectory.points[0].positions = default_arm_joints
-			controller.publish(stamp)
-			rate.sleep()
-			rospy.signal_shutdown('done')
+			break
+			
+
+	controller.joint_trajectory.points[0].effort[0] = 1.0
+	controller.joint_trajectory.points[0].positions = default_arm_joints
+	controller.publish(rospy.Time.now())
+	rospy.Rate(0.5).sleep()
+	rospy.signal_shutdown('done')
