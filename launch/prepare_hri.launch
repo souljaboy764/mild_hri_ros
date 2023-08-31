@@ -17,8 +17,6 @@
 			<remap from="depth_registered/points" to="pointcloud2/points"/>
     </node>
 
-
-
 	<node name="tf_dynreconf_node" type="node" pkg="tf_dynreconf" />
 	<node name="check_selfcollision" pkg="check_selfcollision" type="service_node" respawn="true" output="screen"/>
 
@@ -31,5 +29,5 @@
 	<!-- External webcam for the experimenter to view the interaction -->
 	<node name="webcam_view" type="webcam_view.py" pkg="mild_hri_ros"/>
 
-	
+
 </launch>

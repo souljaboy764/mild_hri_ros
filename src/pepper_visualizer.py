@@ -48,7 +48,7 @@ for w in range(args_h.window_size):
 		marker = Marker()
 		line_strip = Marker()
 		line_strip.ns = marker.ns = "nuitrack_skeleton"
-		marker.header.frame_id = line_strip.header.frame_id = 'base_link'
+		marker.header.frame_id = line_strip.header.frame_id = 'base_footprint'
 		marker.id = i + w * args_h.num_joints//2
 		line_strip.id = i + (args_r.window_size + w) * args_h.num_joints//2
 		line_strip.lifetime = marker.lifetime = rospy.Duration(0.5)
@@ -76,11 +76,11 @@ markerarray_msg.markers = markerarray_msg.markers + lines
 
 trajectory_msg = DisplayTrajectory()
 trajectory_msg.model_id = 'JulietteY20MP'
-trajectory_msg.trajectory_start.joint_state.header.stamp = 'base_link'
+trajectory_msg.trajectory_start.joint_state.header.stamp = 'base_footprint'
 trajectory_msg.trajectory_start.joint_state.name = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll']
 trajectory_msg.trajectory = []
 traj = RobotTrajectory()
-traj.joint_trajectory.header.frame_id = 'base_link'
+traj.joint_trajectory.header.frame_id = 'base_footprint'
 traj.joint_trajectory.joint_names = trajectory_msg.trajectory_start.joint_state.name
 traj.joint_trajectory.points = []
 for i in range(args_r.window_size-1):
@@ -91,11 +91,11 @@ trajectory_msg.trajectory.append(traj)
 
 trajectory_msg_gt = DisplayTrajectory()
 trajectory_msg_gt.model_id = 'JulietteY20MP'
-trajectory_msg_gt.trajectory_start.joint_state.header.stamp = 'base_link'
+trajectory_msg_gt.trajectory_start.joint_state.header.stamp = 'base_footprint'
 trajectory_msg_gt.trajectory_start.joint_state.name = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll']
 trajectory_msg_gt.trajectory = []
 traj = RobotTrajectory()
-traj.joint_trajectory.header.frame_id = 'base_link'
+traj.joint_trajectory.header.frame_id = 'base_footprint'
 traj.joint_trajectory.joint_names = trajectory_msg.trajectory_start.joint_state.name
 traj.joint_trajectory.points = []
 for i in range(args_r.window_size-1):
@@ -106,11 +106,11 @@ trajectory_msg_gt.trajectory.append(traj)
 
 trajectory_msg_ae = DisplayTrajectory()
 trajectory_msg_ae.model_id = 'JulietteY20MP'
-trajectory_msg_ae.trajectory_start.joint_state.header.stamp = 'base_link'
+trajectory_msg_ae.trajectory_start.joint_state.header.stamp = 'base_footprint'
 trajectory_msg_ae.trajectory_start.joint_state.name = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll']
 trajectory_msg_ae.trajectory = []
 traj = RobotTrajectory()
-traj.joint_trajectory.header.frame_id = 'base_link'
+traj.joint_trajectory.header.frame_id = 'base_footprint'
 traj.joint_trajectory.joint_names = trajectory_msg.trajectory_start.joint_state.name
 traj.joint_trajectory.points = []
 for i in range(args_r.window_size-1):
