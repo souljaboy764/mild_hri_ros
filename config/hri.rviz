@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
+        - /RobotState1
       Splitter Ratio: 0.49898168444633484
     Tree Height: 441
   - Class: rviz/Help
@@ -41,188 +42,12 @@ Visualization Manager:
       Reference Frame: base_footprint
       Value: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Filter (blacklist): ""
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        BumperB_frame:
-          Value: false
-        BumperFL_frame:
-          Value: false
-        BumperFR_frame:
-          Value: false
-        CameraBottom_frame:
-          Value: false
-        CameraBottom_optical_frame:
-          Value: false
-        CameraDepth_frame:
-          Value: false
-        CameraDepth_optical_frame:
-          Value: false
-        CameraTop_frame:
-          Value: false
-        CameraTop_optical_frame:
-          Value: false
-        ChestButton_frame:
-          Value: false
-        Head:
-          Value: false
-        HeadTouchFront_frame:
-          Value: false
-        HeadTouchMiddle_frame:
-          Value: false
-        HeadTouchRear_frame:
-          Value: false
-        Hip:
-          Value: false
-        ImuBaseAccelerometer_frame:
-          Value: false
-        ImuTorsoAccelerometer_frame:
-          Value: false
-        ImuTorsoGyrometer_frame:
-          Value: false
-        LBicep:
-          Value: false
-        LElbow:
-          Value: false
-        LFinger11_link:
-          Value: false
-        LFinger12_link:
-          Value: false
-        LFinger13_link:
-          Value: false
-        LFinger21_link:
-          Value: false
-        LFinger22_link:
-          Value: false
-        LFinger23_link:
-          Value: false
-        LFinger31_link:
-          Value: false
-        LFinger32_link:
-          Value: false
-        LFinger33_link:
-          Value: false
-        LFinger41_link:
-          Value: false
-        LFinger42_link:
-          Value: false
-        LFinger43_link:
-          Value: false
-        LForeArm:
-          Value: false
-        LHandTouchBack_frame:
-          Value: false
-        LShoulder:
-          Value: false
-        LSpeaker_frame:
-          Value: false
-        LThumb1_link:
-          Value: false
-        LThumb2_link:
-          Value: false
-        Neck:
-          Value: false
-        Pelvis:
-          Value: false
-        RBicep:
-          Value: false
-        RElbow:
-          Value: false
-        RFinger11_link:
-          Value: false
-        RFinger12_link:
-          Value: false
-        RFinger13_link:
-          Value: false
-        RFinger21_link:
-          Value: false
-        RFinger22_link:
-          Value: false
-        RFinger23_link:
-          Value: false
-        RFinger31_link:
-          Value: false
-        RFinger32_link:
-          Value: false
-        RFinger33_link:
-          Value: false
-        RFinger41_link:
-          Value: false
-        RFinger42_link:
-          Value: false
-        RFinger43_link:
-          Value: false
-        RForeArm:
-          Value: false
-        RHandTouchBack_frame:
-          Value: false
-        RShoulder:
-          Value: false
-        RSpeaker_frame:
-          Value: false
-        RThumb1_link:
-          Value: false
-        RThumb2_link:
-          Value: false
-        ShovelLaser_frame:
-          Value: false
-        SonarBack_frame:
-          Value: false
-        SonarFront_frame:
-          Value: false
-        SurroundingFrontLaser_device_frame:
-          Value: false
-        SurroundingFrontLaser_frame:
-          Value: false
-        SurroundingLeftLaser_device_frame:
-          Value: false
-        SurroundingLeftLaser_frame:
-          Value: false
-        SurroundingRightLaser_device_frame:
-          Value: false
-        SurroundingRightLaser_frame:
-          Value: false
-        Tablet_frame:
-          Value: false
-        Tibia:
-          Value: false
-        VerticalLeftLaser_frame:
-          Value: false
-        VerticalRightLaser_frame:
-          Value: false
-        WheelB_link:
-          Value: false
-        WheelFL_link:
-          Value: false
-        WheelFR_link:
-          Value: false
-        base_footprint:
-          Value: true
-        base_link:
-          Value: false
-        base_link_fake:
-          Value: true
-        camera_link:
-          Value: true
-        endeff:
-          Value: true
-        human_hand:
-          Value: true
-        l_gripper:
-          Value: false
-        l_wrist:
-          Value: false
-        r_gripper:
-          Value: false
-        r_wrist:
-          Value: false
-        target:
-          Value: true
-        torso:
-          Value: false
       Marker Alpha: 1
       Marker Scale: 0.5
       Name: TF
@@ -230,145 +55,9 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        base_link:
-          endeff:
-            {}
-          torso:
-            ChestButton_frame:
-              {}
-            Hip:
-              Pelvis:
-                Tibia:
-                  BumperB_frame:
-                    {}
-                  BumperFL_frame:
-                    {}
-                  BumperFR_frame:
-                    {}
-                  ImuBaseAccelerometer_frame:
-                    {}
-                  ShovelLaser_frame:
-                    {}
-                  SonarBack_frame:
-                    {}
-                  SonarFront_frame:
-                    {}
-                  SurroundingFrontLaser_device_frame:
-                    {}
-                  SurroundingFrontLaser_frame:
-                    {}
-                  SurroundingLeftLaser_device_frame:
-                    {}
-                  SurroundingLeftLaser_frame:
-                    {}
-                  SurroundingRightLaser_device_frame:
-                    {}
-                  SurroundingRightLaser_frame:
-                    {}
-                  VerticalLeftLaser_frame:
-                    {}
-                  VerticalRightLaser_frame:
-                    {}
-                  WheelB_link:
-                    {}
-                  WheelFL_link:
-                    {}
-                  WheelFR_link:
-                    {}
-                  base_footprint:
-                    base_link_fake:
-                      {}
-                    camera_link:
-                      {}
-                    human_hand:
-                      {}
-                    target:
-                      {}
-            ImuTorsoAccelerometer_frame:
-              {}
-            ImuTorsoGyrometer_frame:
-              {}
-            LShoulder:
-              LBicep:
-                LElbow:
-                  LForeArm:
-                    l_wrist:
-                      LFinger11_link:
-                        LFinger12_link:
-                          LFinger13_link:
-                            {}
-                      LFinger21_link:
-                        LFinger22_link:
-                          LFinger23_link:
-                            {}
-                      LFinger31_link:
-                        LFinger32_link:
-                          LFinger33_link:
-                            {}
-                      LFinger41_link:
-                        LFinger42_link:
-                          LFinger43_link:
-                            {}
-                      LHandTouchBack_frame:
-                        {}
-                      LThumb1_link:
-                        LThumb2_link:
-                          {}
-                      l_gripper:
-                        {}
-            Neck:
-              Head:
-                CameraBottom_frame:
-                  CameraBottom_optical_frame:
-                    {}
-                CameraDepth_frame:
-                  CameraDepth_optical_frame:
-                    {}
-                CameraTop_frame:
-                  CameraTop_optical_frame:
-                    {}
-                HeadTouchFront_frame:
-                  {}
-                HeadTouchMiddle_frame:
-                  {}
-                HeadTouchRear_frame:
-                  {}
-                LSpeaker_frame:
-                  {}
-                RSpeaker_frame:
-                  {}
-            RShoulder:
-              RBicep:
-                RElbow:
-                  RForeArm:
-                    r_wrist:
-                      RFinger11_link:
-                        RFinger12_link:
-                          RFinger13_link:
-                            {}
-                      RFinger21_link:
-                        RFinger22_link:
-                          RFinger23_link:
-                            {}
-                      RFinger31_link:
-                        RFinger32_link:
-                          RFinger33_link:
-                            {}
-                      RFinger41_link:
-                        RFinger42_link:
-                          RFinger43_link:
-                            {}
-                      RHandTouchBack_frame:
-                        {}
-                      RThumb1_link:
-                        RThumb2_link:
-                          {}
-                      r_gripper:
-                        {}
-            Tablet_frame:
-              {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Class: moveit_rviz_plugin/Trajectory
       Color Enabled: false
       Enabled: false
@@ -1306,7 +995,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.6691675186157227
+      Distance: 2.989469051361084
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1314,33 +1003,33 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.25014808773994446
-        Y: -0.1493614763021469
-        Z: -1.6689300537109375e-06
+        X: 0.46311962604522705
+        Y: -0.4588017463684082
+        Z: -2.562999725341797e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4247974753379822
+      Pitch: 0.3252023756504059
       Target Frame: base_footprint
-      Yaw: 0.6986278891563416
+      Yaw: 0.9586191177368164
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 987
+  Height: 1376
   Help:
     collapsed: false
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000002000000000000020300000381fc0200000010fb0000000a0049006d006100670065010000003d000001a50000001600fffffffb0000000a0049006d00610067006501000001e8000001d60000001600fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a00560069006500770073000000019d0000016a000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000127000001b60000000000000000fc00000324000000c20000000000fffffffa000000000100000002fb000000160049006d006100670065005f006400650070007400680000000000ffffffff0000000000000000fb000000160049006d006100670065005f0063006f006c006f00720100000000000002a20000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000002290000031a0000000000000000fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000000a0049006d00610067006501000001b600000208000000000000000000000001000001f70000071afc0200000001fb000000100044006900730070006c006100790073000000006e0000071a000000c900ffffff000002f70000038100000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000002000000000000018e00000506fc0200000010fb0000000a0049006d006100670065010000003d0000025b0000001600fffffffb0000000a0049006d006100670065010000029e000002a50000001600fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a00560069006500770073000000019d0000016a000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000127000001b60000000000000000fc00000324000000c20000000000fffffffa000000000100000002fb000000160049006d006100670065005f006400650070007400680000000000ffffffff0000000000000000fb000000160049006d006100670065005f0063006f006c006f00720100000000000002a20000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000002290000031a0000000000000000fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000000a0049006d00610067006501000001b600000208000000000000000000000001000001f700000381fc0200000001fb000000100044006900730070006c006100790073000000003d00000381000000c900ffffff000005240000050600000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Trajectory - Trajectory Slider:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1280
-  X: 3440
-  Y: 0
+  Width: 1720
+  X: 0
+  Y: 27

@@ -12,8 +12,9 @@ import pbdlib_torch as pbd_torch
 
 from utils import *
 from nuitrack_node import NuitrackWrapper
-
 from base_ik_node import BaseIKController, default_arm_joints
+
+from std_msgs.msg import Empty
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -59,7 +60,16 @@ class MILDHRIController(BaseIKController):
 		self.still_reaching = True
 		self.predicted_segment = []
 
-		self.joint_trajectory.points[0].effort[0] = 1.0
+		if self.args.action=='handshake':
+			self.joint_trajectory.points[0].effort[0] = 0.3
+		else:
+			self.joint_trajectory.points[0].effort[0] = 0.7
+
+		self.is_still = False
+		self.joint_state_sub = rospy.Subscriber('/is_still', Empty, self.stillness)
+
+	def stillness(self, msg):
+		self.is_still = True
 
 	def step(self, nui_skeleton, hand_pose):
 		if self.history == []:
@@ -130,10 +140,12 @@ class MILDHRIController(BaseIKController):
 				self.ik_result = self.pepper_chain.active_to_full(self.joint_trajectory.points[0].positions[0:4], [0] * len(self.pepper_chain.links))
 				super().step(nui_skeleton, hand_pose, optimizer="least_squares",  regularization_parameter=0.01)
 			if self.args.action=='handshake':
+				print(active_segment, self.still_reaching, np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]))
 				if self.still_reaching:
-					if np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]) < 0.09:
+					if np.linalg.norm(self.joint_readings[0] - self.joint_trajectory.points[0].positions[0]) < 0.1:
 						self.still_reaching = False
 				else:
+					print('HS stiffness low')
 					self.joint_trajectory.points[0].effort[0] = 0.1
 		else:# self.args.action=='handshake':
 			if self.joint_trajectory.points[0].effort[0] < 0.5:
@@ -164,25 +176,28 @@ if __name__=='__main__':
 			nui_skeleton, hand_pose, stamp = controller.observe_human()
 			if len(nui_skeleton)==0:
 				continue
-			count += 1
+
+			if controller.is_still:
+				count += 1
+			else:
+				controller.publish(stamp)
+				continue
 			
-			if count<30:
+			if count<50:
 				hand_pos.append(nui_skeleton[-2])
 				continue
-			elif count == 30:
+			elif count == 50:
 				hand_pos = np.mean(hand_pos, 0)
 				print('Calibration done')
-			start = datetime.datetime.now()
+			# start = datetime.datetime.now()
 			controller.step(nui_skeleton.copy(), hand_pose)
 			controller.publish(stamp)
 			# print(controller.started, ((nui_skeleton[-2] - hand_pos)**2).sum(), nui_skeleton[-2], hand_pos)
 			if count > 70 and controller.started and ((nui_skeleton[-2] - hand_pos)**2).sum() < 0.005:
-				# rospy.signal_shutdown('Done')
-				break
-	
-		controller.joint_trajectory.points[0].effort[0] = 1.0
-		controller.joint_trajectory.points[0].positions = default_arm_joints
-		controller.publish(rospy.Time.now())
-		controller.publish(rospy.Time.now())
-		rospy.Rate(0.5).sleep()
-		rospy.signal_shutdown('Done')
+				controller.joint_trajectory.points[0].effort[0] = min(0.5, controller.joint_trajectory.points[0].effort[0])
+				controller.joint_trajectory.points[0].positions = default_arm_joints
+				controller.publish(rospy.Time.now())
+				rospy.Rate(0.5).sleep()
+				controller.publish(rospy.Time.now())
+				rospy.Rate(0.5).sleep()
+				rospy.signal_shutdown('Done')
