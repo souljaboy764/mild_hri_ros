@@ -61,7 +61,7 @@ class MILDHRIController(BaseIKController):
 		self.predicted_segment = []
 
 		if self.args.action=='handshake':
-			self.joint_trajectory.points[0].effort[0] = 0.3
+			self.joint_trajectory.points[0].effort[0] = 0.4
 		else:
 			self.joint_trajectory.points[0].effort[0] = 0.7
 
@@ -95,19 +95,42 @@ class MILDHRIController(BaseIKController):
 		self.history = self.history[-5:]
 		
 		zh_post = self.model_h(self.history.flatten()[None], dist_only=True)
+		zr_post = self.model_r(self.robot_history.flatten()[None], dist_only=True)
 
+		# B, _ = self.ssm.obs_likelihood(torch.concat([zh_post.mean,zr_post.mean],dim=-1))#, marginal=slice(0, self.z_dim))
 		B, _ = self.ssm.obs_likelihood(zh_post.mean, marginal=slice(0, self.z_dim))
+		
 		if self.alpha_t is None:
 			alpha_t = self.ssm.init_priors * B[:, 0]
 		else:
 			alpha_t = self.alpha_t.matmul(self.ssm.Trans) * B[:, 0]
 		alpha_norm = torch.sum(alpha_t)
 		if torch.any(torch.isnan(alpha_t)) or torch.allclose(alpha_norm, torch.zeros_like(alpha_norm)):
+			print('Nans or zeros', alpha_t.tolist(), B[:, 0].tolist())
 			alpha_t = self.ssm.init_priors * B[:, 0] + 1e-6
 			alpha_norm = torch.sum(alpha_t) + 1e-6
 			self.alpha_t = alpha_t / alpha_norm
 		else:
 			self.alpha_t = alpha_t / (alpha_norm + pbd_torch.realmin)
+
+		# if self.alpha_t is None:
+		# 	self.ssm.Pd = torch.zeros((self.ssm.nb_states, 10), device=device, requires_grad=False)
+		# 	# Precomputation of duration probabilities
+		# 	for i in range(self.ssm.nb_states):
+		# 		self.ssm.Pd[i, :] = pbd_torch.multi_variate_normal(torch.arange(10, device=device), self.ssm.Mu_Pd[i], self.ssm.Sigma_Pd[i]+1e-8, log=False)
+		# 		self.ssm.Pd[i, :] = self.ssm.Pd[i, :] / (torch.sum(self.ssm.Pd[i, :])+pbd_torch.realmin)
+
+		# 	self.bmx, self.ALPHA, self.S, alpha_t = self.ssm._fwd_init(10, B[:, 0])
+		# else:
+		# 	self.bmx, self.ALPHA, self.S, alpha_t = self.ssm._fwd_step(self.bmx, self.ALPHA, self.S, 10, B[:, 0])
+		# alpha_norm = torch.sum(alpha_t)
+		# if torch.any(torch.isnan(alpha_t)) or torch.allclose(alpha_norm, torch.zeros_like(alpha_norm)):
+		# 	self.bmx, self.ALPHA, self.S, alpha_t = self.ssm._fwd_init(10, B[:, 0])
+		# 	alpha_t += 1e-6
+		# 	alpha_norm = torch.sum(alpha_t) + 1e-6
+		# 	self.alpha_t = alpha_t / alpha_norm
+		# else:
+		# 	self.alpha_t = alpha_t / (alpha_norm + pbd_torch.realmin)
 
 		if self.model_h.cov_cond:
 			data_Sigma_in = zh_post.covariance_matrix
@@ -123,30 +146,29 @@ class MILDHRIController(BaseIKController):
 			else:
 				active_segment = 0
 		else:
-			active_segment = self.alpha_t.argmax()
+			active_segment = self.alpha_t.argmax().item()
 		self.predicted_segment.append(active_segment)
-		# print(active_segment.item(), self.alpha_t[active_segment].item(), self.alpha_t.tolist(), torch.isnan(B[:, 0]).tolist())
-		q = xr_cond.reshape((self.model_r.window_size, self.model_r.num_joints)).mean(0).cpu().numpy()
+		print(active_segment, self.alpha_t[active_segment].item(), self.alpha_t.cpu().numpy())
+		q = xr_cond.reshape((self.model_r.window_size, self.model_r.num_joints))[0].cpu().numpy()#.mean(0).cpu().numpy()
 		# Handshake IK Stiffness control
 		self.joint_trajectory.points[0].positions = 0.2*np.array(self.joint_trajectory.points[0].positions) + 0.8*np.array(q.tolist() + [1., self.robot_hand_joint])
 		self.joint_trajectory.points[0].positions[0] -= np.deg2rad(15)
-		
 		if args.ik_only: # Putting the baseline here to simulate the same perception-reaction delay as with the network
 			super().step(nui_skeleton, hand_pose, optimizer="least_squares")
 			if self.args.action=='handshake' and self.joint_readings[0] < 0.3:
-				self.joint_trajectory.points[0].effort[0] = 0.1
+				self.joint_trajectory.points[0].effort[0] = 0.15
 		elif (active_segment>0 and active_segment<self.ssm.nb_states-1) or ((active_segment==0 or active_segment==self.ssm.nb_states-1) and self.alpha_t[active_segment]<0.6):
 			if self.args.ik:
 				self.ik_result = self.pepper_chain.active_to_full(self.joint_trajectory.points[0].positions[0:4], [0] * len(self.pepper_chain.links))
-				super().step(nui_skeleton, hand_pose, optimizer="least_squares",  regularization_parameter=0.01)
+				super().step(nui_skeleton, hand_pose, optimizer="scalar",  regularization_parameter=0.01)
 			if self.args.action=='handshake':
-				print(active_segment, self.still_reaching, np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]))
+				print(active_segment, self.still_reaching, np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]), np.linalg.norm(self.joint_readings[0] - self.joint_trajectory.points[0].positions[0]))
 				if self.still_reaching:
-					if np.linalg.norm(self.joint_readings[0] - self.joint_trajectory.points[0].positions[0]) < 0.1:
+					if np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]) < 0.1:
 						self.still_reaching = False
+						self.joint_trajectory.points[0].effort[0] = 0.15
 				else:
-					print('HS stiffness low')
-					self.joint_trajectory.points[0].effort[0] = 0.1
+					self.joint_trajectory.points[0].effort[0] = 0.15
 		else:# self.args.action=='handshake':
 			if self.joint_trajectory.points[0].effort[0] < 0.5:
 				self.joint_trajectory.points[0].effort[0] += 0.01
