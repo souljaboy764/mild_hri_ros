@@ -48,7 +48,7 @@ for w in range(args_h.window_size):
 		marker = Marker()
 		line_strip = Marker()
 		line_strip.ns = marker.ns = "nuitrack_skeleton"
-		marker.header.frame_id = line_strip.header.frame_id = 'base_footprint'
+		marker.header.frame_id = line_strip.header.frame_id = 'base_link'
 		marker.id = i + w * args_h.num_joints//2
 		line_strip.id = i + (args_r.window_size + w) * args_h.num_joints//2
 		line_strip.lifetime = marker.lifetime = rospy.Duration(0.5)
