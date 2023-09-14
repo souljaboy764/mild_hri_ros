@@ -21,11 +21,15 @@ joint_trajectory.points.append(JointTrajectoryPoint())
 joint_trajectory.points[0].effort = np.zeros(len(joint_trajectory.joint_names)).tolist()
 
 if args.action == 'handshake':
-    joint_trajectory.points[0].effort[0] = 0.2
+    joint_trajectory.points[0].effort[0] = 0.5
     joint_trajectory.points[0].positions = [0.4, -0.009, 0.6, 0.7, 1., 0.75] # default standing angle values
     joint_trajectory.header.stamp = rospy.Time.now()
     send_target(joint_trajectory)
-    rospy.Rate(10).sleep()
+    rospy.Rate(0.5).sleep()
+    joint_trajectory.points[0].effort[0] = 0.2
+    joint_trajectory.header.stamp = rospy.Time.now()
+    send_target(joint_trajectory)
+    rospy.Rate(1).sleep()
     rospy.signal_shutdown('done')
 
 elif args.action == 'rocket':
