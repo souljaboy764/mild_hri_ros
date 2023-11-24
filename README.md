@@ -39,8 +39,10 @@ ROS Package to run the [MILD-HRI](https://sites.google.com/view/mild-hri) models
 
 Run steps 1 and 2 from above to setup the experiment.
 
-For running the IK baseline:
-
+For running mild:
 ```bash
-rosrun mild_hri_ros base_ik_controller.py
+python src/mild_hr_node.py  --ckpt models/nuisiv2pepper_3joints_xvel_v3_2_z5h6_trial1_400.pth --action handshake --ik
 ```
+
+after --action use either handshake or rocket for the interaction to be performed. For running only MILD without ik, remove the --ik flag at the end. for running the IK baseline, change the flag at the end to --ik-only
+Ask the user to stand still initially. Once it shows that the calibration is ready, in another terminal, run `rostopic pub /is_still std_msgs/Empty "{}" -1` to start the interaction.
