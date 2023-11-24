@@ -29,12 +29,12 @@ class BPHRIController(BaseIKController):
 		# Buetepage ['waving', 'handshake', 'rocket', 'parachute']
 		self.args = args
 		if args.action == 'handshake':
-			self.label = torch.Tensor(np.array([0,1,0,0.])).to(device)
+			self.label = torch.Tensor(np.array([1,1,1,1.])).to(device)
 			self.robot_hand_joint = 0.7
 			
 		if args.action == 'rocket':
 			self.robot_hand_joint = 0.
-			self.label = torch.Tensor(np.array([0,0,1,0.])).to(device)
+			self.label = torch.Tensor(np.array([1,1,1,1.])).to(device)
 
 		MODELS_FOLDER = os.path.join('models','bp_hri')
 		
@@ -61,8 +61,8 @@ class BPHRIController(BaseIKController):
 
 		# Model Warmup https://medium.com/log-loss/model-warmup-8e9681ef4d41
 		self.robot_vae(torch.zeros((100,self.robot_vae.input_dim),device=device))
-		self.human_tdm(torch.zeros((100,self.human_tdm.input_dim),device=device))
-		self.hri(torch.zeros((100,self.hri.input_dim),device=device))
+		self.human_tdm(torch.zeros((100,self.human_tdm.input_dim),device=device), None)
+		self.hri(torch.zeros((100,self.hri.input_dim),device=device), None)
 		
 		self.started = False
 		self.history = []
@@ -75,6 +75,10 @@ class BPHRIController(BaseIKController):
 
 		self.is_still = True
 		self.still_sub = rospy.Subscriber('/is_still', Empty, self.stillness)
+		self.last_pred = None
+
+		self.dh = []
+		self.zr_hri = []
 
 	def stillness(self, msg):
 		self.is_still = True
@@ -102,16 +106,25 @@ class BPHRIController(BaseIKController):
 		self.started = True
 		self.history = self.history[-5:]
 
-		x_p1_tdm = torch.cat([self.history[-1], self.label])
-		x_r2_hri = torch.cat([torch.Tensor(self.joint_readings).to(device), self.label])
+		x_p1_tdm = torch.cat([self.history[-1], self.label])[None]
+		if self.last_pred is None:
+			x_r2_hri = torch.cat([torch.Tensor(self.joint_readings[:4]).to(device), torch.ones_like(self.label)])[None]
+		else:
+			x_r2_hri = torch.cat([torch.Tensor(self.last_pred).to(device), torch.zeros_like(self.label)])[None]
+		# x_r2_hri[0,0] += np.deg2rad(15)
 		_, _, d_x1_dist = self.human_tdm(x_p1_tdm, None)
 		hri_input = torch.concat([x_r2_hri, d_x1_dist.mean], dim=-1)
 		z_r2hri_dist, z_r2hri_samples = self.hri(hri_input, None)
 		x_r2_gen = self.robot_vae._output(self.robot_vae._decoder(z_r2hri_dist.mean))
+
+		self.zr_hri.append(z_r2hri_dist.mean.cpu().numpy()[0])
+		self.dh.append(d_x1_dist.mean.cpu().numpy()[0])
 		
-		q = x_r2_gen.reshape((self.robot_vae.window_size, self.robot_vae.num_joints))[0].cpu().numpy()#.mean(0).cpu().numpy()
+		self.last_pred = x_r2_gen.reshape((self.robot_vae.window_size, self.robot_vae.num_joints))[0].cpu().numpy()#.mean(0).cpu().numpy()
+
+		print(self.history[-1], x_r2_hri[0,:4], d_x1_dist.mean)
 		
-		self.joint_trajectory.points[0].positions = 0.2*np.array(self.joint_trajectory.points[0].positions) + 0.8*np.array(q.tolist() + [1., self.robot_hand_joint])
+		self.joint_trajectory.points[0].positions = 0.2*np.array(self.joint_trajectory.points[0].positions) + 0.8*np.array(self.last_pred.tolist() + [1., self.robot_hand_joint])
 		self.joint_trajectory.points[0].positions[0] -= np.deg2rad(15)
 		
 		# if args.ik_only: # Putting the baseline here to simulate the same perception-reaction delay as with the network
@@ -124,9 +137,9 @@ class BPHRIController(BaseIKController):
 		# 	(active_segment==self.ssm.nb_states-1 and self.alpha_t[active_segment]<0.6):
 		# 	if (self.args.action=='handshake' and active_segment==0 and self.alpha_t[active_segment]<transition_state_prob):
 		# 		print('Transition state')
-		# 	if self.args.ik:
-		# 		self.ik_result = self.pepper_chain.active_to_full(self.joint_trajectory.points[0].positions[0:4], [0] * len(self.pepper_chain.links))
-		# 		super().step(nui_skeleton, hand_pose, optimizer="scalar",  regularization_parameter=0.01)
+		if self.args.ik:
+			self.ik_result = self.pepper_chain.active_to_full(self.joint_trajectory.points[0].positions[0:4], [0] * len(self.pepper_chain.links))
+			super().step(nui_skeleton, hand_pose, optimizer="scalar",  regularization_parameter=0.01)
 		# 	if self.args.action=='handshake': # Handshake Stiffness control
 		# 		print(active_segment, self.still_reaching, np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]), np.linalg.norm(self.joint_readings[0] - self.joint_trajectory.points[0].positions[0]))
 		# 		if self.still_reaching:
@@ -146,6 +159,8 @@ if __name__=='__main__':
 		parser = argparse.ArgumentParser(description='Nuitrack HR Testing')
 		parser.add_argument('--action', type=str, required=True, metavar='ACTION', choices=['handshake', 'rocket'],
 						help='Action to perform: handshake or rocket).')
+		parser.add_argument('--ik', action="store_true",
+								help='Flag for setting whether to use IK or not')
 		args = parser.parse_args()
 		rospy.init_node('mild_hri_node')
 		rate = rospy.Rate(100)
@@ -183,3 +198,4 @@ if __name__=='__main__':
 				controller.publish(rospy.Time.now())
 				rospy.Rate(1).sleep()
 				rospy.signal_shutdown('Done')
+	np.savez_compressed('bp_latents_realtime.npz', zr_hri=np.array(controller.zr_hri), dh=np.array(controller.dh))
