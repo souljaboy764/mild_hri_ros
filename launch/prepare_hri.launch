@@ -1,5 +1,5 @@
 <launch>
-
+	<arg name="video_stream"      default="/dev/video0"/>
 	<arg name="robot_ip"          default="192.168.100.77"/>
 	<arg name="network_interface" default="eno1" />
 	<node name="dynparam_load" type="dynparam" pkg="dynamic_reconfigure" args="load /tf_dynreconf_node $(find mild_hri_ros)/config/nuitrack_pepper_tf.yaml"/>
@@ -27,7 +27,9 @@
 	</node>
 
 	<!-- External webcam for the experimenter to view the interaction -->
-	<node name="webcam_view" type="webcam_view.py" pkg="mild_hri_ros"/>
+	<node name="webcam_view" type="webcam_view.py" pkg="mild_hri_ros">
+		<param name="video_stream" value="$(arg video_stream)" />
+	</node>
 
 
 </launch>

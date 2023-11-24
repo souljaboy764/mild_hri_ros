@@ -7,7 +7,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 rospy.init_node('webcam_view_node')
-cap = cv2.VideoCapture("/dev/video8")
+
+cap = cv2.VideoCapture(rospy.get_param('~video_stream',"/dev/video0"))
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
 if not cap.isOpened():
