@@ -31,6 +31,8 @@ Once the prerequisites are installed, clone this repository to your catkin works
 ```bash
 cd /path/to/catkin_ws/src
 git clone https://github.com/souljaboy764/mild_hri_ros --recursive
+cd ..
+catkin_make
 ```
 
 1. Before running any ROS nodes, make sure that the library path is set for Nuitrack.
@@ -67,4 +69,4 @@ Ask the user to stand still initially. Once it shows that the calibration is rea
 
 ## Note
 
-In case the path for `mild is not `
+In case the path for `mild_hri` in the `src` folder doesn't get recognized, please add an `__init__.py` to the `mild_hri` to bring it into the path.
