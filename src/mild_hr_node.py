@@ -12,7 +12,6 @@ import pbdlib_torch as pbd_torch
 from pbdlib_torch.functions import multi_variate_normal
 
 from utils import *
-from nuitrack_node import NuitrackWrapper
 from base_ik_node import BaseIKController, default_arm_joints
 
 from std_msgs.msg import Empty
@@ -143,25 +142,30 @@ class MILDHRIController(BaseIKController):
 					self.crossed = True
 					print('crossed')
 
-		q = xr_cond.reshape((self.model_r.window_size, self.model_r.num_joints))[0].cpu().numpy()#.mean(0).cpu().numpy()
+		q = xr_cond.reshape((self.model_r.window_size, self.model_r.num_joints))[0].cpu().numpy()
 		
 		self.joint_trajectory.points[0].positions = 0.2*np.array(self.joint_trajectory.points[0].positions) + 0.8*np.array(q.tolist() + [1., self.robot_hand_joint])
-		self.joint_trajectory.points[0].positions[0] -= np.deg2rad(15)
+		self.joint_trajectory.points[0].positions[0] -= np.deg2rad(15) # for some reason pepper leans forward so this helps mitigate the arm not going forward enough.
 		
 		if args.ik_only: # Putting the baseline here to simulate the same perception-reaction delay as with the network
 			super().step(nui_skeleton, hand_pose, optimizer="least_squares")
 			if self.args.action=='handshake' and self.joint_readings[0] < 0.35:
 				self.joint_trajectory.points[0].effort[0] = 0.15
+		
 		elif (active_segment>0 and active_segment<self.ssm.nb_states-1) or \
 			(self.args.action=='handshake' and self.crossed) or \
 			(self.args.action=='rocket' and active_segment==0 and self.alpha_t[active_segment]<0.6) or \
 			(active_segment==self.ssm.nb_states-1 and self.alpha_t[active_segment]<0.6):
+			
 			if (self.args.action=='handshake' and active_segment==0 and self.alpha_t[active_segment]<transition_state_prob):
 				print('Transition state')
+			
 			if self.args.ik:
 				self.ik_result = self.pepper_chain.active_to_full(self.joint_trajectory.points[0].positions[0:4], [0] * len(self.pepper_chain.links))
 				super().step(nui_skeleton, hand_pose, optimizer="scalar",  regularization_parameter=0.01)
-			if self.args.action=='handshake': # Handshake Stiffness control
+			
+			if self.args.action=='handshake':
+				# Handshake Stiffness control
 				print(active_segment, self.still_reaching, np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]), np.linalg.norm(self.joint_readings[0] - self.joint_trajectory.points[0].positions[0]))
 				if self.still_reaching:
 					if np.linalg.norm(self.joint_readings[:4] - self.joint_trajectory.points[0].positions[0:4]) < 0.1:
@@ -169,7 +173,8 @@ class MILDHRIController(BaseIKController):
 						self.joint_trajectory.points[0].effort[0] = 0.15
 				else:
 					self.joint_trajectory.points[0].effort[0] = 0.15
-		else:# self.args.action=='handshake':
+		
+		else:
 			if self.joint_trajectory.points[0].effort[0] < 0.5:
 				self.joint_trajectory.points[0].effort[0] += 0.01
 

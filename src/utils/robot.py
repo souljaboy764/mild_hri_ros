@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.optimize as opt
-from check_selfcollision.srv import *
 from moveit_msgs.msg import RobotState
 from utils.helper import *
 import rospy
@@ -25,7 +24,6 @@ class PepperKinematics:
 		self._robot_state = RobotState()
 		self._robot_state.joint_state.name = ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
 		rospy.wait_for_service('check_selfcollision_service')
-		self._check_selfcollision_service = rospy.ServiceProxy('check_selfcollision_service', SelfCollosion)
 
 	##
 	#	Function implementing the relative linkwise forward kinematics of the robot. This is the main function that needs to be implemented while extending this base class.
@@ -206,7 +204,7 @@ class PepperKinematics:
 		
 		self._robot_state.joint_state.position = theta
 		
-		nll = 0.5*(np.dot(diff1,tmp1) + np.dot(diff2,tmp2)) + (not self._check_selfcollision_service(self._robot_state).is_colliding)*1000
+		nll = 0.5*(np.dot(diff1,tmp1) + np.dot(diff2,tmp2))
 		grad_nll = tmp1 + np.dot(jac_th.T,tmp2)
 
 		return nll, grad_nll
