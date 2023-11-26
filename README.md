@@ -30,7 +30,7 @@ Once the prerequisites are installed, clone this repository to your catkin works
 
 ```bash
 cd /path/to/catkin_ws/src
-git clone https://github.com/souljaboy764/mild_hri_ros --recursive
+git clone https://github.com/souljaboy764/mild_hri_ros
 cd ..
 catkin_make
 ```

@@ -1,17 +1,13 @@
 #!/usr/bin/python
 
-import matplotlib.pyplot as plt
 import torch
-import cv2
 import argparse
 
-import datetime
-
-import mild_hri
 import pbdlib_torch as pbd_torch
 from pbdlib_torch.functions import multi_variate_normal
 
 from utils import *
+from vae import VAE
 from base_ik_node import BaseIKController, default_arm_joints
 
 from std_msgs.msg import Empty
@@ -43,10 +39,10 @@ class MILDHRIController(BaseIKController):
 
 		self.mu = self.ssm.mu.cpu().numpy()
 		self.sigma = self.ssm.sigma.cpu().numpy()
-		self.model_h = mild_hri.vae.VAE(**(ckpt['args_h'].__dict__)).to(device)
+		self.model_h = VAE(**(ckpt['args_h'].__dict__)).to(device)
 		self.model_h.load_state_dict(ckpt['model_h'])
 		self.model_h.eval()
-		self.model_r = mild_hri.vae.VAE(**{**(ckpt['args_h'].__dict__), **(ckpt['args_r'].__dict__)}).to(device)
+		self.model_r = VAE(**{**(ckpt['args_h'].__dict__), **(ckpt['args_r'].__dict__)}).to(device)
 		self.model_r.load_state_dict(ckpt['model_r'])
 		self.model_r.eval()
 		self.z_dim = self.model_h.latent_dim
