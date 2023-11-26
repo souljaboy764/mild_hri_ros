@@ -1,6 +1,6 @@
 # mild_hri_ros
 
-ROS Package to run the [MILD-HRI](https://sites.google.com/view/mild-hri) models on the Pepper Robot
+ROS Package to run the [MILD-HRI](https://git.ias.informatik.tu-darmstadt.de/phri-learning/mild_hri) models on the Pepper Robot
 
 ## Dependencies
 
@@ -14,7 +14,7 @@ The following python libraries need to be installed with pip
 - ikpy ([modified](https://github.com/souljaboy764/ikpy))
 - [pbdlib_pytorch](https://git.ias.informatik.tu-darmstadt.de/prasad/pbdlib-torch)
 
-For the skeleton tracking, Nuitrack needs to be installed. Follow the [instructions ](https://github.com/3DiVi/nuitrack-sdk/blob/master/doc/Install.md) to install nuitrack. Once Nuitrack is installed and the license is activated, download the suitable [python wheel file for Nuitrack](https://github.com/3DiVi/nuitrack-sdk/tree/master/PythonNuitrack-beta/pip_packages/dist) and install it with `pip install /path/to/wheel.whl`
+For the skeleton tracking, Nuitrack needs to be installed. Follow the [instructions](https://github.com/3DiVi/nuitrack-sdk/blob/master/doc/Install.md) to install nuitrack. Once Nuitrack is installed and the license is activated, download the suitable [python wheel file for Nuitrack](https://github.com/3DiVi/nuitrack-sdk/tree/master/PythonNuitrack-beta/pip_packages/dist) and install it with `pip install /path/to/wheel.whl`
 
 ### ROS Packages
 
@@ -70,7 +70,3 @@ For running MILD:
 
 after `--action` use either handshake or rocket for the interaction to be performed. For running only MILD without Inverse Kinematics, remove the `--ik` flag at the end. for running the IK baseline, change the flag at the end to `--ik-only`
 Ask the user to stand still initially. Once it shows that the calibration is ready, in another terminal, run `rostopic pub /is_still std_msgs/Empty "{}" -1` to start the interaction.
-
-## Note
-
-In case the path for `mild_hri` in the `src` folder doesn't get recognized, please add an `__init__.py` to the `mild_hri` to bring it into the path.
